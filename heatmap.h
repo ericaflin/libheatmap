@@ -126,6 +126,14 @@ unsigned char* heatmap_render_saturated_to(const heatmap_t* h, const heatmap_col
  *
  * For more information about stamps, read `heatmap_stamp_t`'s documentation.
  */
+
+/* Generate a square tile stamp 
+ *
+ * w: The width of the stamp, in pixels.
+ * 
+ */
+float* heatmap_stamp_gen_tile_data(unsigned w);
+
 heatmap_stamp_t* heatmap_stamp_load(unsigned w, unsigned h, float* data);
 
 /* Generates a default round stamp of a given radius. This means the stamp will
@@ -151,6 +159,7 @@ heatmap_stamp_t* heatmap_stamp_gen_nonlinear(unsigned radius, float (*distshape)
 
 /* Frees up all memory taken by the stamp. */
 void heatmap_stamp_free(heatmap_stamp_t* s);
+
 
 /* Create a new colorscheme using a COPY of the given `ncolors` `colors`.
  *

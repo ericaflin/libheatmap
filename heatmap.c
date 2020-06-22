@@ -32,6 +32,23 @@
 /* Having a default stamp ready makes it easier for simple usage of the library
  * since there is no need to create a new stamp.
  */
+
+static float tile_stamp_4_data[] = {
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+};
+
+static heatmap_stamp_t tile_stamp_4 = {
+    tile_stamp_4_data, 9, 9
+};
+
 static float stamp_default_4_data[] = {
     0.0f      , 0.0f      , 0.1055728f, 0.1753789f, 0.2f, 0.1753789f, 0.1055728f, 0.0f      , 0.0f      ,
     0.0f      , 0.1514719f, 0.2788897f, 0.3675445f, 0.4f, 0.3675445f, 0.2788897f, 0.1514719f, 0.0f      ,
@@ -71,7 +88,7 @@ void heatmap_free(heatmap_t* h)
 
 void heatmap_add_point(heatmap_t* h, unsigned x, unsigned y)
 {
-    heatmap_add_point_with_stamp(h, x, y, &stamp_default_4);
+    heatmap_add_point_with_stamp(h, x, y, &tile_stamp_4);
 }
 
 void heatmap_add_point_with_stamp(heatmap_t* h, unsigned x, unsigned y, const heatmap_stamp_t* stamp)
@@ -115,7 +132,7 @@ void heatmap_add_point_with_stamp(heatmap_t* h, unsigned x, unsigned y, const he
 
 void heatmap_add_weighted_point(heatmap_t* h, unsigned x, unsigned y, float w)
 {
-    heatmap_add_weighted_point_with_stamp(h, x, y, w, &stamp_default_4);
+    heatmap_add_weighted_point_with_stamp(h, x, y, w, &tile_stamp_4);
 }
 
 /* Initial timings do show a difference large enough (~10% slower without FMA)
@@ -257,9 +274,10 @@ static float linear_dist(float dist)
     return dist;
 }
 
-heatmap_stamp_t* heatmap_stamp_gen(unsigned r)
+heatmap_stamp_t* heatmap_stamp_gen(unsigned w)
 {
-    return heatmap_stamp_gen_nonlinear(r, linear_dist);
+    float* heatmap_tile_data = heatmap_stamp_gen_tile_data(w);
+    return heatmap_stamp_load(w, w, heatmap_tile_data);
 }
 
 heatmap_stamp_t* heatmap_stamp_gen_nonlinear(unsigned r, float (*distshape)(float))
@@ -286,6 +304,23 @@ heatmap_stamp_t* heatmap_stamp_gen_nonlinear(unsigned r, float (*distshape)(floa
     }
 
     return heatmap_stamp_new_with(d, d, stamp);
+}
+
+
+float* heatmap_stamp_gen_tile_data(unsigned w)
+{
+
+    float* tile_stamp_data = (float*)calloc(w*w, sizeof(float));
+    if(!tile_stamp_data)
+        return 0;
+
+    int i;
+    for (i=0; i < w*w; i++){
+        tile_stamp_data[i] = 1.0f;
+    }
+
+    return tile_stamp_data;
+
 }
 
 void heatmap_stamp_free(heatmap_stamp_t* s)
