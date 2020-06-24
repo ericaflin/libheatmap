@@ -24,6 +24,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <map>
 
@@ -184,7 +186,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(argc < 3 || 6 < argc) {
+    if(argc < 3 || 7 < argc) {
         std::cerr << "Invalid number of arguments!" << std::endl;
         std::cout << "Usage:" << std::endl;
         std::cout << "  " << argv[0] << " WIDTH HEIGHT [STAMP_RADIUS [COLORSCHEME]] < points.txt > heatmap.png" << std::endl;
@@ -221,27 +223,68 @@ int main(int argc, char* argv[])
     const size_t r = argc >= 4 ? atoi(argv[3]) : std::min(w, h)/10;
     heatmap_stamp_t* stamp = heatmap_stamp_gen(r);
 
-    if(argc >= 5 && g_schemes.find(argv[4]) == g_schemes.end()) {
+    char* csv_name = argv[4];
+
+    if(argc >= 6 && g_schemes.find(argv[5]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 5 ? g_schemes[argv[4]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 6 ? g_schemes[argv[5]] : heatmap_cs_default;
 
     unsigned int x, y;
     float weight = 1.0f;
-#ifdef WEIGHTED
-    while(std::cin >> x >> y >> weight) {
-#else
-    while(std::cin >> x >> y) {
-#endif // WEIGHTED
-        if(x < w && y < h) {
-            // Always using the weighted one even on unweighted data is not a
-            // drama for this example and keeps the code somewhat clearer.
-            heatmap_add_weighted_point_with_stamp(hm, x, y, weight, stamp);
-        } else {
-            std::cerr << "Warning: Skipping out-of-bound input coordinate: (" << x << "," << y << ")." << std::endl;
+
+
+    // Default coordinate scaling coefficients for now ***
+    unsigned int x_scaling = 10;
+    unsigned int y_scaling = 10;
+
+    unsigned int row_num = 0;
+
+
+    std::ifstream  data(csv_name);
+
+    std::string line;
+    while(std::getline(data,line))
+    {
+        std::stringstream  lineStream(line);
+        std::string        cell;
+        
+        if (row_num == 0){
+            row_num += 1;
+            continue;
         }
+        y = row_num * y_scaling;
+        int col_num = 0;
+
+        while(std::getline(lineStream,cell,','))
+        {
+            if (col_num == 0){
+                col_num += 1;
+                continue;
+            }
+            x = col_num * x_scaling;
+            weight = std::stof(cell);
+
+            if(x < w && y < h) {
+                heatmap_add_weighted_point_with_stamp(hm, x, y, weight, stamp);
+            } else {
+                std::cerr << "Warning: Skipping out-of-bound input coordinate: (" << x << "," << y << ")." << std::endl;
+            }
+            col_num += 1;
+
+        }
+        row_num += 1;
     }
+
+
+
+    
+
+
+
+
+
     heatmap_stamp_free(stamp);
 
     std::vector<unsigned char> image(w*h*4);
