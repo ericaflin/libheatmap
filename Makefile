@@ -32,7 +32,7 @@ LDFLAGS+=-lm
 all: libheatmap.a libheatmap.so benchmarks examples tests
 tests: tests/test
 benchmarks: benchs/add_point_with_stamp benchs/weighted_unweighted benchs/rendering
-examples: examples/heatmap_gen examples/heatmap_gen_weighted examples/simplest_cpp examples/simplest_c examples/huge examples/customstamps examples/customstamp_heatmaps examples/show_colorschemes
+examples: examples/heatmap_gen examples/heatmap_gen_fit_image examples/simplest_cpp examples/simplest_c examples/huge examples/customstamps examples/customstamp_heatmaps examples/show_colorschemes
 
 clean:
 	rm -f libheatmap.a
@@ -40,7 +40,7 @@ clean:
 	rm -f benchs/add_point_with_stamp
 	rm -f benchs/rendering
 	rm -f examples/heatmap_gen
-	rm -f examples/heatmap_gen_weighted
+	rm -f examples/heatmap_gen_fit_image
 	rm -f examples/simplest_c
 	rm -f examples/simplest_cpp
 	rm -f examples/simplest_libpng_cpp
@@ -84,10 +84,10 @@ examples/heatmap_gen.o: examples/heatmap_gen.cpp
 examples/heatmap_gen: examples/heatmap_gen.o examples/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/heatmap_gen_weighted.o: examples/heatmap_gen.cpp
-	$(CXX) -c $< $(CXXFLAGS) -DWEIGHTED -o $@
+examples/heatmap_gen_fit_image.o: examples/heatmap_gen.cpp
+	$(CXX) -c $< $(CXXFLAGS) -DFIT_IMAGE -o $@
 
-examples/heatmap_gen_weighted: examples/heatmap_gen_weighted.o examples/lodepng_cpp.o libheatmap.a
+examples/heatmap_gen_fit_image: examples/heatmap_gen_fit_image.o examples/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 examples/simplest_cpp.o: examples/simplest.cpp
