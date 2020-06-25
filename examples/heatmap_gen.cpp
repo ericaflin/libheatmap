@@ -186,33 +186,14 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(argc < 7 || 9 < argc) {
-        std::cerr << "Invalid number of arguments!" << std::endl;
+    if(argc < 9 || 10 < argc) {
+        std::cerr << std::endl << "Invalid number of arguments!" << std::endl;
         std::cout << "Usage:" << std::endl;
-        std::cout << "  " << argv[0] << " IMAGE_WIDTH IMAGE_HEIGHT [TILE_RATIO_X] [TILE_RATIO_Y] DATA_COLS DATA_ROWS CSV_FILENAME [COLORSCHEME] > heatmap.png" << std::endl;
-        std::cout << std::endl;
-#ifdef WEIGHTED ///*** Edit this stuff later to test that proper error messages pop up
-        std::cout << "  points.txt should contain a list of space-separated triplets of x, y and w" << std::endl;
-        std::cout << "  where x and y are coordinates (as unsigned integers) of points to put onto" << std::endl;
-        std::cout << "  the heatmap and w is the weight (as float) of the point, e.g.:" << std::endl;
-        std::cout << "    5 10 0.5 1 13 12.3 125 10 1.0" << std::endl;
-        std::cout << "  will add the points (5, 10) with weight 0.5, (1, 13) with weight 12.3," << std::endl;
-        std::cout << "  and (125, 10) with weight 1.0 onto the map." << std::endl;
-#else
-        std::cout << "  points.txt should contain a list of space-separated pairs of x and y" << std::endl;
-        std::cout << "  coordinates (as unsigned integers) of points to put onto the heatmap, e.g.:" << std::endl;
-        std::cout << "    5 10 1 13 125 10" << std::endl;
-        std::cout << "  will add the points (5, 10), (1, 13), and (125, 10) onto the map." << std::endl;
-#endif // WEIGHTED
-        std::cout << "  Note that a newline counts as a space, so you may input one point per line." << std::endl;
-        std::cout << std::endl;
-        std::cout << "  The default STAMP_RADIUS is a twentieth of the smallest heatmap dimension." << std::endl;
-        std::cout << "  For instance, for a 512x1024 heatmap, the default stamp_radius is 25," << std::endl;
-        std::cout << "  resulting in a stamp of 51x51 pixels." << std::endl;
+        std::cout << "  " << argv[0] << " image_width image_height tile_ratio_x tile_ratio_y num_data_cols num_data_rows csv_data_filename output_png_name [colorscheme]" << std::endl;
         std::cout << std::endl;
         std::cout << "  To get a list of available colorschemes, run" << std::endl;
         std::cout << "  " << argv[0] << " -l" << std::endl;
-        std::cout << "  The default colorscheme is Spectral_mixed." << std::endl;
+        std::cout << "  The default colorscheme is Spectral_mixed." << std::endl << std::endl;
 
         return 1;
     }
@@ -220,11 +201,11 @@ int main(int argc, char* argv[])
     
     const unsigned image_width = atoi(argv[1]), image_height = atoi(argv[2]);
 
-    const unsigned tile_ratio_x = argc >= 7 ? atoi(argv[3]) : 1; 
-    const unsigned tile_ratio_y = argc >= 7 ? atoi(argv[4]) : 1; 
+    const unsigned tile_ratio_x = argc >= 8 ? atoi(argv[3]) : 1; 
+    const unsigned tile_ratio_y = argc >= 8 ? atoi(argv[4]) : 1; 
 
-    const unsigned num_cols = argc >= 7 ? atoi(argv[5]) : atoi(argv[3]); 
-    const unsigned num_rows = argc >= 7 ? atoi(argv[6]) : atoi(argv[4]);     
+    const unsigned num_cols = argc >= 8 ? atoi(argv[5]) : atoi(argv[3]); 
+    const unsigned num_rows = argc >= 8 ? atoi(argv[6]) : atoi(argv[4]);     
 
     // Calculate appropiate sizing for stamp
     unsigned max_x_scaling_factor =  (int) (image_width / (num_cols * tile_ratio_x));
@@ -248,13 +229,13 @@ int main(int argc, char* argv[])
     heatmap_stamp_t* stamp = heatmap_stamp_gen(stamp_width, stamp_height);
     
 
-    char* csv_name = argv[7];
+    const char* csv_name = argc >= 8 ? argv[7] : argv[5];
 
-    if(argc >= 9 && g_schemes.find(argv[8]) == g_schemes.end()) {
+    if(argc >= 10 && g_schemes.find(argv[9]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 9 ? g_schemes[argv[8]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 10 ? g_schemes[argv[9]] : heatmap_cs_default;
 
     unsigned int x, y;
     float weight;
@@ -306,7 +287,10 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::cout.write((char*)&png[0], png.size());
+    const char* output_png_name = argc >= 8 ? argv[8]: argv[6];
+    lodepng::save_file(png, output_png_name);
+
+    // std::cout.write((char*)&png[0], png.size());
 
     return 0;
 }
