@@ -127,22 +127,20 @@ unsigned char* heatmap_render_saturated_to(const heatmap_t* h, const heatmap_col
  * For more information about stamps, read `heatmap_stamp_t`'s documentation.
  */
 
-/* Generate a square tile stamp 
+/* Generate a rectangular tile stamp 
  *
- * w: The width of the stamp, in pixels.
  * 
  */
-float* heatmap_stamp_gen_tile_data(unsigned w);
+float* heatmap_stamp_gen_tile_data(unsigned stamp_width, unsigned stamp_height);
 
 heatmap_stamp_t* heatmap_stamp_load(unsigned w, unsigned h, float* data);
 
-/* Generates a default round stamp of a given radius. This means the stamp will
- * have a size of 2*radius+1 square. The default stamp is just a spherical
- * gradient around the center.
+/* Generates a rectangular tile stamp
+ * The default stamp is just a solid square.
  *
  * For more information about stamps, read `heatmap_stamp_t`'s documentation.
  */
-heatmap_stamp_t* heatmap_stamp_gen(unsigned radius);
+heatmap_stamp_t* heatmap_stamp_gen(unsigned stamp_width, unsigned stamp_height);
 
 /* Generates a stamp just like `heatmap_stamp_gen` but calls the given
  * `distshape` function in order to determine the value of every single pixel.

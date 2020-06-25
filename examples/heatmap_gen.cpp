@@ -186,12 +186,12 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if(argc < 3 || 7 < argc) {
+    if(argc < 7 || 9 < argc) {
         std::cerr << "Invalid number of arguments!" << std::endl;
         std::cout << "Usage:" << std::endl;
-        std::cout << "  " << argv[0] << " WIDTH HEIGHT [STAMP_RADIUS [COLORSCHEME]] < points.txt > heatmap.png" << std::endl;
+        std::cout << "  " << argv[0] << " IMAGE_WIDTH IMAGE_HEIGHT [TILE_RATIO_X] [TILE_RATIO_Y] DATA_COLS DATA_ROWS CSV_FILENAME [COLORSCHEME] > heatmap.png" << std::endl;
         std::cout << std::endl;
-#ifdef WEIGHTED
+#ifdef WEIGHTED ///*** Edit this stuff later to test that proper error messages pop up
         std::cout << "  points.txt should contain a list of space-separated triplets of x, y and w" << std::endl;
         std::cout << "  where x and y are coordinates (as unsigned integers) of points to put onto" << std::endl;
         std::cout << "  the heatmap and w is the weight (as float) of the point, e.g.:" << std::endl;
@@ -217,33 +217,50 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const size_t w = atoi(argv[1]), h = atoi(argv[2]);
-    heatmap_t* hm = heatmap_new(w, h);
+    
+    const unsigned image_width = atoi(argv[1]), image_height = atoi(argv[2]);
 
-    const size_t r = argc >= 4 ? atoi(argv[3]) : std::min(w, h)/10;
-    heatmap_stamp_t* stamp = heatmap_stamp_gen(r);
+    const unsigned tile_ratio_x = argc >= 7 ? atoi(argv[3]) : 1; 
+    const unsigned tile_ratio_y = argc >= 7 ? atoi(argv[4]) : 1; 
 
-    char* csv_name = argv[4];
+    const unsigned num_cols = argc >= 7 ? atoi(argv[5]) : atoi(argv[3]); 
+    const unsigned num_rows = argc >= 7 ? atoi(argv[6]) : atoi(argv[4]);     
 
-    if(argc >= 6 && g_schemes.find(argv[5]) == g_schemes.end()) {
+    // Calculate appropiate sizing for stamp
+    unsigned max_x_scaling_factor =  (int) (image_width / (num_cols * tile_ratio_x));
+    // std::cerr << "max_x_scaling_factor: " << max_x_scaling_factor << std::endl;
+    unsigned max_y_scaling_factor = (int) (image_height / (num_rows * tile_ratio_y));
+    // std::cerr << "max_y_scaling_factor: " << max_y_scaling_factor << std::endl;
+    unsigned scaling_factor = std::min(max_x_scaling_factor,max_y_scaling_factor);
+    // std::cerr << "scaling_factor: " << scaling_factor << std::endl;
+    unsigned stamp_width = scaling_factor * tile_ratio_x;
+    // std::cerr << "stamp_width: " << stamp_width << std::endl;
+    unsigned stamp_height = scaling_factor * tile_ratio_y;
+    // std::cerr << "stamp_height: " << stamp_height << std::endl;
+
+
+    unsigned updated_image_width = stamp_width * num_cols;
+    // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
+    unsigned updated_image_height = stamp_height * num_rows;
+    // std::cerr << "updated_image_height: " << updated_image_height << std::endl;
+
+    heatmap_t* hm = heatmap_new(updated_image_width, updated_image_height);
+    heatmap_stamp_t* stamp = heatmap_stamp_gen(stamp_width, stamp_height);
+    
+
+    char* csv_name = argv[7];
+
+    if(argc >= 9 && g_schemes.find(argv[8]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 6 ? g_schemes[argv[5]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 9 ? g_schemes[argv[8]] : heatmap_cs_default;
 
     unsigned int x, y;
-    float weight = 1.0f;
-
-
-    // Default coordinate scaling coefficients for now ***
-    unsigned int x_scaling = 10;
-    unsigned int y_scaling = 10;
-
+    float weight;
     unsigned int row_num = 0;
 
-
     std::ifstream  data(csv_name);
-
     std::string line;
     while(std::getline(data,line))
     {
@@ -254,7 +271,7 @@ int main(int argc, char* argv[])
             row_num += 1;
             continue;
         }
-        y = row_num * y_scaling;
+        y = (row_num - 0.5) * stamp_height;
         int col_num = 0;
 
         while(std::getline(lineStream,cell,','))
@@ -263,10 +280,10 @@ int main(int argc, char* argv[])
                 col_num += 1;
                 continue;
             }
-            x = col_num * x_scaling;
+            x = (col_num - 0.5) * stamp_width;
             weight = std::stof(cell);
 
-            if(x < w && y < h) {
+            if(x < updated_image_width && y < updated_image_height) {
                 heatmap_add_weighted_point_with_stamp(hm, x, y, weight, stamp);
             } else {
                 std::cerr << "Warning: Skipping out-of-bound input coordinate: (" << x << "," << y << ")." << std::endl;
@@ -277,22 +294,14 @@ int main(int argc, char* argv[])
         row_num += 1;
     }
 
-
-
-    
-
-
-
-
-
     heatmap_stamp_free(stamp);
 
-    std::vector<unsigned char> image(w*h*4);
+    std::vector<unsigned char> image(updated_image_width*updated_image_height*4);
     heatmap_render_to(hm, colorscheme, &image[0]);
     heatmap_free(hm);
 
     std::vector<unsigned char> png;
-    if(unsigned error = lodepng::encode(png, image, w, h)) {
+    if(unsigned error = lodepng::encode(png, image, updated_image_width, updated_image_height)) {
         std::cerr << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
         return 1;
     }

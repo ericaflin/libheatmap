@@ -24,6 +24,7 @@
 
 #include "heatmap.h"
 
+#include <stdio.h>
 #include <stdlib.h> /* malloc, calloc, free */
 #include <string.h> /* memcpy, memset */
 #include <math.h>   /* sqrtf */
@@ -274,10 +275,10 @@ static float linear_dist(float dist)
     return dist;
 }
 
-heatmap_stamp_t* heatmap_stamp_gen(unsigned w)
+heatmap_stamp_t* heatmap_stamp_gen(unsigned stamp_width, unsigned stamp_height)
 {
-    float* heatmap_tile_data = heatmap_stamp_gen_tile_data(w);
-    return heatmap_stamp_load(w, w, heatmap_tile_data);
+    float* heatmap_tile_data = heatmap_stamp_gen_tile_data(stamp_width, stamp_height);
+    return heatmap_stamp_load(stamp_width, stamp_height, heatmap_tile_data);
 }
 
 heatmap_stamp_t* heatmap_stamp_gen_nonlinear(unsigned r, float (*distshape)(float))
@@ -307,15 +308,15 @@ heatmap_stamp_t* heatmap_stamp_gen_nonlinear(unsigned r, float (*distshape)(floa
 }
 
 
-float* heatmap_stamp_gen_tile_data(unsigned w)
+float* heatmap_stamp_gen_tile_data(unsigned stamp_width, unsigned stamp_height)
 {
 
-    float* tile_stamp_data = (float*)calloc(w*w, sizeof(float));
+    float* tile_stamp_data = (float*)calloc(stamp_width*stamp_height, sizeof(float));
     if(!tile_stamp_data)
         return 0;
 
-    int i;
-    for (i=0; i < w*w; i++){
+    unsigned i;
+    for (i=0; i < stamp_width*stamp_height; i++){
         tile_stamp_data[i] = 1.0f;
     }
 
