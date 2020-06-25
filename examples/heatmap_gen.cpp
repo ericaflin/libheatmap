@@ -197,20 +197,28 @@ int main(int argc, char* argv[])
 
         return 1;
     }
-
     
     const unsigned image_width = atoi(argv[1]), image_height = atoi(argv[2]);
 
     const unsigned tile_ratio_x = argc >= 8 ? atoi(argv[3]) : 1; 
     const unsigned tile_ratio_y = argc >= 8 ? atoi(argv[4]) : 1; 
 
-    const unsigned num_cols = argc >= 8 ? atoi(argv[5]) : atoi(argv[3]); 
-    const unsigned num_rows = argc >= 8 ? atoi(argv[6]) : atoi(argv[4]);     
+    const unsigned num_data_cols = argc >= 8 ? atoi(argv[5]) : atoi(argv[3]); 
+    const unsigned num_data_rows = argc >= 8 ? atoi(argv[6]) : atoi(argv[4]);     
+
+    if (image_width < (tile_ratio_x * num_data_cols) || image_height < (tile_ratio_y * num_data_rows)) {
+        std::cerr << std::endl << "Image dimensions are not enough to accomodate tile dimensions and amount of data." << std::endl;
+        std::cout << "Specifically, the following must be true: " << std::endl;
+        std::cout << " image_width >= (tile_ratio_x * num_data_cols)" << std::endl;
+        std::cout << " image_height >= (tile_ratio_y * num_data_rows)" << std::endl << std::endl;
+
+        return 1;
+    }
 
     // Calculate appropiate sizing for stamp
-    unsigned max_x_scaling_factor =  (int) (image_width / (num_cols * tile_ratio_x));
+    unsigned max_x_scaling_factor =  (int) (image_width / (num_data_cols * tile_ratio_x));
     // std::cerr << "max_x_scaling_factor: " << max_x_scaling_factor << std::endl;
-    unsigned max_y_scaling_factor = (int) (image_height / (num_rows * tile_ratio_y));
+    unsigned max_y_scaling_factor = (int) (image_height / (num_data_rows * tile_ratio_y));
     // std::cerr << "max_y_scaling_factor: " << max_y_scaling_factor << std::endl;
     unsigned scaling_factor = std::min(max_x_scaling_factor,max_y_scaling_factor);
     // std::cerr << "scaling_factor: " << scaling_factor << std::endl;
@@ -220,9 +228,9 @@ int main(int argc, char* argv[])
     // std::cerr << "stamp_height: " << stamp_height << std::endl;
 
 
-    unsigned updated_image_width = stamp_width * num_cols;
+    unsigned updated_image_width = stamp_width * num_data_cols;
     // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
-    unsigned updated_image_height = stamp_height * num_rows;
+    unsigned updated_image_height = stamp_height * num_data_rows;
     // std::cerr << "updated_image_height: " << updated_image_height << std::endl;
 
     heatmap_t* hm = heatmap_new(updated_image_width, updated_image_height);
