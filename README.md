@@ -14,7 +14,7 @@ num_data_rows: Number of data rows in the input CSV data file (exclude the label
 csv_data_filename: File path of your csv data file.
 - Example usage via commandline: 
 ```bash
-generators/heatmap_gen 10000 10000 10 1 8 10000 sample_data/hugeGenesFile.csv.csv RdYlGn_discrete > example_output/hugeGenesFile.png
+generators/heatmap_gen 10000 10000 10 1 8 10000 sample_data/hugeGenesFile.csv RdYlGn_discrete > example_output/hugeGenesFile.png
 ```
 
 2) heatmap_gen_fit_image: Generates heatmap png file based upon desired image output dimensions. Automatically rescales data tiles accordingly.
