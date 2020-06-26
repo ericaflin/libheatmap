@@ -186,13 +186,17 @@ int main(int argc, char* argv[])
         return 0;
     }
 #ifdef FIT_IMAGE
-    if(argc < 7 || 8 < argc) {
+    if(argc < 6 || 7 < argc) {
 #else      
-    if(argc < 9 || 10 < argc) {
+    if(argc < 8 || 9 < argc) {
 #endif 
         std::cerr << std::endl << "Invalid number of arguments!" << std::endl;
         std::cout << "Usage:" << std::endl;
-        std::cout << "  " << argv[0] << " image_width image_height tile_ratio_x tile_ratio_y num_data_cols num_data_rows csv_data_filename output_png_name [colorscheme]" << std::endl;
+#ifdef FIT_IMAGE
+        std::cout << "  " << argv[0] << " image_width image_height num_data_cols num_data_rows csv_data_filename [colorscheme]" << std::endl;
+#else      
+        std::cout << "  " << argv[0] << " image_width image_height tile_ratio_x tile_ratio_y num_data_cols num_data_rows csv_data_filename [colorscheme]" << std::endl;
+#endif 
         std::cout << std::endl;
         std::cout << "  To get a list of available colorschemes, run" << std::endl;
         std::cout << "  " << argv[0] << " -l" << std::endl;
@@ -206,9 +210,7 @@ int main(int argc, char* argv[])
 #ifdef FIT_IMAGE
     const unsigned num_data_cols = atoi(argv[3]); 
     const unsigned num_data_rows = atoi(argv[4]);   
-    const char* csv_name = argv[5];
-    const char* output_png_name = argv[6];  
-    
+    const char* csv_path = argv[5];    
 
     if (image_width < num_data_cols || image_height < num_data_rows) {
         std::cerr << std::endl << "Image dimensions must be at least the dimensions of the data." << std::endl;
@@ -225,19 +227,18 @@ int main(int argc, char* argv[])
     unsigned tile_height = (int) (image_height / (num_data_rows));
     // std::cerr << "tile_height: " << tile_height << std::endl;
 
-    if(argc >= 8 && g_schemes.find(argv[7]) == g_schemes.end()) {
+    if(argc >= 7 && g_schemes.find(argv[6]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 8 ? g_schemes[argv[7]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 7 ? g_schemes[argv[6]] : heatmap_cs_default;
 
 #else
-    const unsigned tile_ratio_x = argc >= 9 ? atoi(argv[3]) : 1; 
-    const unsigned tile_ratio_y = argc >= 9 ? atoi(argv[4]) : 1; 
-    const unsigned num_data_cols = argc >= 9 ? atoi(argv[5]) : atoi(argv[3]); 
-    const unsigned num_data_rows = argc >= 9 ? atoi(argv[6]) : atoi(argv[4]);     
-    const char* csv_name = argv[7];
-    const char* output_png_name = argv[8];
+    const unsigned tile_ratio_x = argc >= 8 ? atoi(argv[3]) : 1; 
+    const unsigned tile_ratio_y = argc >= 8 ? atoi(argv[4]) : 1; 
+    const unsigned num_data_cols = argc >= 8 ? atoi(argv[5]) : atoi(argv[3]); 
+    const unsigned num_data_rows = argc >= 8 ? atoi(argv[6]) : atoi(argv[4]);     
+    const char* csv_path = argv[7];
 
     if (image_width < (tile_ratio_x * num_data_cols) || image_height < (tile_ratio_y * num_data_rows)) {
         std::cerr << std::endl << "Image dimensions are not enough to accomodate tile dimensions and amount of data." << std::endl;
@@ -260,13 +261,20 @@ int main(int argc, char* argv[])
     unsigned tile_height = scaling_factor * tile_ratio_y;
     // std::cerr << "tile_height: " << tile_height << std::endl;
 
-    if(argc >= 10 && g_schemes.find(argv[9]) == g_schemes.end()) {
+    if(argc >= 9 && g_schemes.find(argv[8]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 10 ? g_schemes[argv[9]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 9 ? g_schemes[argv[8]] : heatmap_cs_default;
 
 #endif
+
+    std::ifstream ifile;
+    ifile.open(csv_path);
+    if(!ifile) {
+        std::cerr << "CSV file does not exist at given filepath" << std::endl;
+        return 1;
+    }
 
     unsigned updated_image_width = tile_width * num_data_cols;
     // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
@@ -280,7 +288,7 @@ int main(int argc, char* argv[])
     float weight;
     unsigned int row_num = 0;
 
-    std::ifstream  data(csv_name);
+    std::ifstream  data(csv_path);
     std::string line;
     while(std::getline(data,line))
     {
@@ -326,9 +334,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    lodepng::save_file(png, output_png_name);
-
-    // std::cout.write((char*)&png[0], png.size());
+    // lodepng::save_file(png, output_png_name);
+    std::cout.write((char*)&png[0], png.size());
 
     return 0;
 }

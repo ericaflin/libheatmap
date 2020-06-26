@@ -29,30 +29,22 @@ LDFLAGS+=-lm
 
 .PHONY: all benchmarks samples clean
 
-all: libheatmap.a libheatmap.so benchmarks examples tests
-tests: tests/test
-benchmarks: benchs/add_point_with_stamp benchs/weighted_unweighted benchs/rendering
-examples: examples/heatmap_gen examples/heatmap_gen_fit_image examples/simplest_cpp examples/simplest_c examples/huge examples/customstamps examples/customstamp_heatmaps examples/show_colorschemes
+all: libheatmap.a libheatmap.so generators
+generators: generators/heatmap_gen generators/heatmap_gen_fit_image 
 
 clean:
 	rm -f libheatmap.a
 	rm -f libheatmap.so
-	rm -f benchs/add_point_with_stamp
-	rm -f benchs/rendering
-	rm -f examples/heatmap_gen
-	rm -f examples/heatmap_gen_fit_image
-	rm -f examples/simplest_c
-	rm -f examples/simplest_cpp
-	rm -f examples/simplest_libpng_cpp
-	rm -f examples/huge
-	rm -f examples/customstamps
-	rm -f examples/customstamp_heatmaps
-	rm -f examples/show_colorschemes
-	rm -f tests/test
+	rm -f generators/heatmap_gen
+	rm -f generators/heatmap_gen_fit_image
+	rm -f generators/simplest_c
+	rm -f generators/simplest_cpp
+	rm -f generators/simplest_libpng_cpp
+	rm -f generators/huge
+	rm -f generators/customstamps
+	rm -f generators/customstamp_heatmaps
+	rm -f generators/show_colorschemes
 	find . -name '*.[os]' -print0 | xargs -0 rm -f
-
-test: tests
-	tests/test
 
 heatmap.o: heatmap.c heatmap.h
 	$(CC) -c $< $(CFLAGS) -o $@
@@ -66,86 +58,62 @@ libheatmap.a: heatmap.o $(patsubst %.c,%.o,$(wildcard colorschemes/*.c))
 libheatmap.so: heatmap.o $(patsubst %.c,%.o,$(wildcard colorschemes/*.c))
 	$(CC) $(LDFLAGS) -shared -o $@ $^
 
-tests/test.o: tests/test.cpp
+generators/lodepng_cpp.o: generators/lodepng.cpp generators/lodepng.h
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-tests/test: tests/test.o libheatmap.a
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-examples/lodepng_cpp.o: examples/lodepng.cpp examples/lodepng.h
-	$(CXX) -c $< $(CXXFLAGS) -o $@
-
-examples/lodepng_c.o: examples/lodepng.cpp examples/lodepng.h
+generators/lodepng_c.o: generators/lodepng.cpp generators/lodepng.h
 	$(CC) -x c -c $< $(CFLAGS) -o $@
 
-examples/heatmap_gen.o: examples/heatmap_gen.cpp
+generators/heatmap_gen.o: generators/heatmap_gen.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/heatmap_gen: examples/heatmap_gen.o examples/lodepng_cpp.o libheatmap.a
+generators/heatmap_gen: generators/heatmap_gen.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/heatmap_gen_fit_image.o: examples/heatmap_gen.cpp
+generators/heatmap_gen_fit_image.o: generators/heatmap_gen.cpp
 	$(CXX) -c $< $(CXXFLAGS) -DFIT_IMAGE -o $@
 
-examples/heatmap_gen_fit_image: examples/heatmap_gen_fit_image.o examples/lodepng_cpp.o libheatmap.a
+generators/heatmap_gen_fit_image: generators/heatmap_gen_fit_image.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/simplest_cpp.o: examples/simplest.cpp
+generators/simplest_cpp.o: generators/simplest.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/simplest_cpp: examples/simplest_cpp.o examples/lodepng_cpp.o libheatmap.a
+generators/simplest_cpp: generators/simplest_cpp.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/simplest_c.o: examples/simplest.c
+generators/simplest_c.o: generators/simplest.c
 	$(CC) -c $< $(CFLAGS) -o $@
 
-examples/simplest_c: examples/simplest_c.o examples/lodepng_c.o libheatmap.a
+generators/simplest_c: generators/simplest_c.o generators/lodepng_c.o libheatmap.a
 	$(CC) $^ $(LDFLAGS) -o $@
 
-examples/simplest_libpng_cpp.o: examples/simplest_libpng.cpp
+generators/simplest_libpng_cpp.o: generators/simplest_libpng.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/simplest_libpng_cpp: examples/simplest_libpng_cpp.o libheatmap.a
+generators/simplest_libpng_cpp: generators/simplest_libpng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -lpng -o $@
 
-examples/huge.o: examples/huge.cpp
+generators/huge.o: generators/huge.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/huge: examples/huge.o examples/lodepng_cpp.o libheatmap.a
+generators/huge: generators/huge.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/customstamps.o: examples/customstamps.cpp
+generators/customstamps.o: generators/customstamps.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/customstamps: examples/customstamps.o examples/lodepng_cpp.o libheatmap.a
+generators/customstamps: generators/customstamps.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/customstamp_heatmaps.o: examples/customstamp_heatmaps.cpp
+generators/customstamp_heatmaps.o: generators/customstamp_heatmaps.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/customstamp_heatmaps: examples/customstamp_heatmaps.o examples/lodepng_cpp.o libheatmap.a
+generators/customstamp_heatmaps: generators/customstamp_heatmaps.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-examples/show_colorschemes.o: examples/show_colorschemes.cpp
+generators/show_colorschemes.o: generators/show_colorschemes.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-examples/show_colorschemes: examples/show_colorschemes.o examples/lodepng_cpp.o libheatmap.a
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-benchs/add_point_with_stamp.o: benchs/add_point_with_stamp.cpp benchs/common.hpp benchs/timing.hpp
-	$(CXX) -c $< $(CXXFLAGS) -o $@
-
-benchs/add_point_with_stamp: benchs/add_point_with_stamp.o libheatmap.a
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-benchs/weighted_unweighted.o: benchs/weighted_unweighted.cpp benchs/common.hpp benchs/timing.hpp
-	$(CXX) -c $< $(CXXFLAGS) -o $@
-
-benchs/weighted_unweighted: benchs/weighted_unweighted.o libheatmap.a
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-benchs/rendering.o: benchs/rendering.cpp benchs/common.hpp benchs/timing.hpp
-	$(CXX) -c $< $(CXXFLAGS) -o $@
-
-benchs/rendering: benchs/rendering.o libheatmap.a
+generators/show_colorschemes: generators/show_colorschemes.o generators/lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
