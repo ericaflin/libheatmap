@@ -34,6 +34,10 @@
  * since there is no need to create a new stamp.
  */
 
+void hello() {
+    printf("Hello, World!\n");
+}
+
 static float tile_stamp_4_data[] = {
     1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
     1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,

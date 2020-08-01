@@ -273,19 +273,17 @@ int main(int argc, char* argv[])
 
 #endif
 
-    unsigned updated_image_width = tile_width * num_data_cols;
-    // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
-    unsigned updated_image_height = tile_height * num_data_rows;
-    // std::cerr << "updated_image_height: " << updated_image_height << std::endl;
-
-    //TODO: Call heatmap_clustering twice: once to cluster the columns, and a second time to cluster the rows (by transposing the csv of the former... or maybe it's more efficient to go into heatmap_clustering.cpp and do both runs at once)
-
     std::ifstream ifile;
     ifile.open(csv_path);
     if(!ifile) {
         std::cerr << "CSV file does not exist at given filepath" << std::endl;
         return 1;
     }
+
+    unsigned updated_image_width = tile_width * num_data_cols;
+    // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
+    unsigned updated_image_height = tile_height * num_data_rows;
+    // std::cerr << "updated_image_height: " << updated_image_height << std::endl;
 
     heatmap_t* hm = heatmap_new(updated_image_width, updated_image_height);
     heatmap_stamp_t* tile = heatmap_stamp_gen(tile_width, tile_height);
@@ -306,7 +304,7 @@ int main(int argc, char* argv[])
             continue;
         }
         y = (row_num - 0.5) * tile_height;
-        unsigned int col_num = 0;
+        int col_num = 0;
 
         while(std::getline(lineStream,cell,','))
         {
