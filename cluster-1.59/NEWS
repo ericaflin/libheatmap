@@ -1,0 +1,4 @@
+2019.08.30
+Fixed the clustercentroids routine in python/clustermodule.c.
+Changed src/cluster.c and python/clustermodule.c to be consistent with PEP7.
+Added tests to the Python unit tests.
