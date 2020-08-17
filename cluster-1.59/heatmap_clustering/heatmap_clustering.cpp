@@ -185,7 +185,6 @@ std::map<std::string, const heatmap_colorscheme_t*> g_schemes = {
 void reorder_strings(std::vector<std::string> &label_names, int* indices, int n) 
 { 
     std::vector<std::string> temp; 
-  
     // indices's elements are the labels/indices of label_names
     // indices's positions (element index) are the new positions (element index)
     for (int i=0; i<n; i++) {
@@ -197,138 +196,36 @@ void reorder_strings(std::vector<std::string> &label_names, int* indices, int n)
     {  
        label_names.at(i) = temp.at(i); 
     } 
-
 } 
 
-void reorder_heatmap_rows(double** &heatmap_data, int* index, int num_data_rows, int num_data_cols) 
+template <typename T>
+void reorder_matrix(T** &matrix, int* index, int num_data_rows, int num_data_cols, char axis) 
 { 
-    /*
-    // Allocate memory
-    double **temp = new double*[num_data_rows];
-    for(int i = 0; i < num_data_rows; ++i) {
-        temp[i] = new int[num_data_cols];
+    std::string possible_axes = "rc";
+    if (possible_axes.find(axis) == std::string::npos) {
+        std::cerr << std::endl << "Axis value must be 'r' (row) or 'c' (column)" << std::endl;
+        return;
     }
-    */
 
     double **temp = new double*[num_data_rows];
-
     for (int i = 0; i < num_data_rows; i++ )
     {
-
         temp[i] = new double[num_data_cols];
-
-        // 
         for (int j=0; j< num_data_cols; j++) 
         {
-            temp[i][j] = heatmap_data[index[i]][j]; 
+            if (axis == 'r') {
+                temp[i][j] = matrix[index[i]][j]; 
+            }
+            else {
+                temp[i][j] = matrix[i][index[j]]; 
+            }
         }
     }
   
     // Copy temp[] to col_names[] 
     for (int i=0; i<num_data_rows; i++) {
         for (int j=0; j< num_data_cols; j++) {
-            heatmap_data[i][j] = temp[i][j]; 
-            // index[i] = i;
-        }
-    }
-
-    // Deallocate memory
-    for(int i = 0; i < num_data_rows; ++i) {
-        free(temp[i]);
-    }
-    free(temp);
-
-} 
-
-void reorder_heatmap_cols(double** &heatmap_data, int* index, int num_data_rows, int num_data_cols) 
-{ 
-
-    double **temp = new double*[num_data_rows];
-
-    for (int i = 0; i < num_data_rows; i++ )
-    {
-
-        temp[i] = new double[num_data_cols];
-
-        // heatmap_data[i][j] should be of row represented by index[i]'s index 
-        for (int j=0; j< num_data_cols; j++) 
-        {
-            temp[i][j] = heatmap_data[i][index[j]]; 
-        }
-    }
-  
-    // Copy temp[] to col_names[] 
-    for (int i=0; i<num_data_rows; i++) {
-        for (int j=0; j< num_data_cols; j++) {
-            heatmap_data[i][j]   = temp[i][j]; 
-            // index[i] = i;
-        }
-    }
-
-    // Deallocate memory
-    for(int i = 0; i < num_data_rows; ++i) {
-        free(temp[i]);
-    }
-    free(temp);
-
-} 
-
-
-void reorder_mask_rows(int** &mask, int* index, int num_data_rows, int num_data_cols) 
-{ 
-
-
-    double **temp = new double*[num_data_rows];
-
-    for (int i = 0; i < num_data_rows; i++ )
-    {
-
-        temp[i] = new double[num_data_cols];
-
-        // heatmap_data[i][j] should be of row represented by index[i]'s index 
-        for (int j=0; j< num_data_cols; j++) 
-        {
-            temp[i][j] = mask[index[i]][j]; 
-        }
-    }
-  
-    // Copy temp[] to col_names[] 
-    for (int i=0; i<num_data_rows; i++) {
-        for (int j=0; j< num_data_cols; j++) {
-            mask[i][j]   = temp[i][j]; 
-            // index[i] = i;
-        }
-    }
-
-    // Deallocate memory
-    for(int i = 0; i < num_data_rows; ++i) {
-        free(temp[i]);
-    }
-    free(temp);
-
-} 
-
-void reorder_mask_cols(int** &mask, int* index, int num_data_rows, int num_data_cols) 
-{ 
-
-    double **temp = new double*[num_data_rows];
-
-    for (int i = 0; i < num_data_rows; i++ )
-    {
-
-        temp[i] = new double[num_data_cols];
-
-        // heatmap_data[i][j] should be of row represented by index[i]'s index 
-        for (int j=0; j< num_data_cols; j++) 
-        {
-            temp[i][j] = mask[i][index[j]]; 
-        }
-    }
-  
-    // Copy temp[] to col_names[] 
-    for (int i=0; i<num_data_rows; i++) {
-        for (int j=0; j< num_data_cols; j++) {
-            mask[i][j]   = temp[i][j]; 
+            matrix[i][j] = temp[i][j]; 
             // index[i] = i;
         }
     }
@@ -344,7 +241,6 @@ void reorder_mask_cols(int** &mask, int* index, int num_data_rows, int num_data_
 int main(int argc, char* argv[])
 {  
     clock_t start, mid, mid2, end;
-
     start = clock();
     
     if(argc == 2 && std::string(argv[1]) == "-l") {
@@ -456,7 +352,7 @@ int main(int argc, char* argv[])
 
         return 1;
     }
-    
+
     unsigned updated_image_width = tile_width * num_data_cols;
     // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
     unsigned updated_image_height = tile_height * num_data_rows;
@@ -584,20 +480,19 @@ int main(int argc, char* argv[])
     // Reorder column labels
     reorder_strings(col_names, col_sorted_indices, num_data_cols);
     // Reorder heatmap columns
-    reorder_heatmap_cols(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols);
+    reorder_matrix(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols, 'c');
     // Reorder mask columns
-    reorder_mask_cols(mask, col_sorted_indices, num_data_rows, num_data_cols);
+    reorder_matrix(mask, col_sorted_indices, num_data_rows, num_data_cols, 'c');
 
     free(col_tree);
     free(col_weight);
-    
+
     unsigned row_nnodes = num_data_rows-1;
 
     ///Get dendrogram for row data
     double *row_weight = new double[num_data_rows];
     for(unsigned i = 0; i < num_data_rows; ++i) {
-        row_weight[i] = 1.0
-        ;
+        row_weight[i] = 1.0;
     }
     Node* row_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, row_weight, 0, distance_function, linkage_function, 0); ///// Hardcoding Euclidean distance and Average linkage for now
 
@@ -626,14 +521,13 @@ int main(int argc, char* argv[])
     // Reorder row labels
     reorder_strings(row_names, row_sorted_indices, num_data_rows);
     // Reorder heatmap rows
-    reorder_heatmap_rows(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols);
+    reorder_matrix(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols, 'r');
     // Reorder mask
-    reorder_mask_rows(mask, row_sorted_indices, num_data_rows, num_data_cols);
-    
+    reorder_matrix(mask, row_sorted_indices, num_data_rows, num_data_cols, 'r');
+
     // Free memory used during hierarchical clustering
     free(row_tree);
     free(row_weight);
-    
 
     /* ============================ Generating heatmap pixels ============================ */
     
@@ -702,7 +596,6 @@ int main(int argc, char* argv[])
     std::cerr << "PNG generation (second half) : " << std::fixed 
          << time_taken_2 << std::setprecision(5); 
     std::cerr << " sec " << std::endl; 
-    
     
     return 0;
 }
