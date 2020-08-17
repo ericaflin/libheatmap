@@ -354,21 +354,21 @@ int main(int argc, char* argv[])
         return 0;
     }
 #ifdef FIT_IMAGE
-    if(argc < 6 || 7 < argc) {
-#else      
     if(argc < 8 || 9 < argc) {
+#else      
+    if(argc < 10 || 11 < argc) {
 #endif 
         std::cerr << std::endl << "Invalid number of arguments!" << std::endl;
-        std::cout << "Usage:" << std::endl;
+        std::cerr << "Usage:" << std::endl;
 #ifdef FIT_IMAGE
-        std::cout << "  " << argv[0] << " image_width image_height num_data_cols num_data_rows csv_data_filename [colorscheme]" << std::endl;
+        std::cerr << "  " << argv[0] << " image_width image_height num_data_cols num_data_rows distance_function linkage_function csv_data_filename [colorscheme]" << std::endl;
 #else      
-        std::cout << "  " << argv[0] << " image_width image_height tile_ratio_x tile_ratio_y num_data_cols num_data_rows csv_data_filename [colorscheme]" << std::endl;
+        std::cerr << "  " << argv[0] << " image_width image_height tile_ratio_x tile_ratio_y num_data_cols num_data_rows distance_funcition linkage_function csv_data_filename [colorscheme]" << std::endl;
 #endif 
-        std::cout << std::endl;
-        std::cout << "  To get a list of available colorschemes, run" << std::endl;
-        std::cout << "  " << argv[0] << " -l" << std::endl;
-        std::cout << "  The default colorscheme is Spectral_mixed." << std::endl << std::endl;
+        std::cerr << std::endl;
+        std::cerr << "  To get a list of available colorschemes, run" << std::endl;
+        std::cerr << "  " << argv[0] << " -l" << std::endl;
+        std::cerr << "  The default colorscheme is Spectral_mixed." << std::endl << std::endl;
 
         return 1;
     }
@@ -378,13 +378,15 @@ int main(int argc, char* argv[])
 #ifdef FIT_IMAGE
     const unsigned num_data_cols = atoi(argv[3]); 
     const unsigned num_data_rows = atoi(argv[4]);   
-    const char* csv_path = argv[5];    
+    const char distance_function = argv[5][0]; 
+    const char linkage_function = argv[6][0];     
+    const char* csv_path = argv[7];    
 
     if (image_width < num_data_cols || image_height < num_data_rows) {
         std::cerr << std::endl << "Image dimensions must be at least the dimensions of the data." << std::endl;
-        std::cout << "Specifically, the following must be true: " << std::endl;
-        std::cout << " image_width > num_data_cols" << std::endl;
-        std::cout << " image_height > num_data_rows" << std::endl << std::endl;
+        std::cerr << "Specifically, the following must be true: " << std::endl;
+        std::cerr << " image_width > num_data_cols" << std::endl;
+        std::cerr << " image_height > num_data_rows" << std::endl << std::endl;
 
         return 1;
     }        
@@ -395,24 +397,26 @@ int main(int argc, char* argv[])
     unsigned tile_height = (int) (image_height / (num_data_rows));
     // std::cerr << "tile_height: " << tile_height << std::endl;
 
-    if(argc >= 7 && g_schemes.find(argv[6]) == g_schemes.end()) {
+    if(argc >= 9 && g_schemes.find(argv[8]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 7 ? g_schemes[argv[6]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 9 ? g_schemes[argv[8]] : heatmap_cs_default;
 
 #else
-    const unsigned tile_ratio_x = argc >= 8 ? atoi(argv[3]) : 1; 
-    const unsigned tile_ratio_y = argc >= 8 ? atoi(argv[4]) : 1; 
-    const unsigned num_data_cols = argc >= 8 ? atoi(argv[5]) : atoi(argv[3]); 
-    const unsigned num_data_rows = argc >= 8 ? atoi(argv[6]) : atoi(argv[4]);     
-    const char* csv_path = argv[7];
+    const unsigned tile_ratio_x = argc >= 10 ? atoi(argv[3]) : 1; 
+    const unsigned tile_ratio_y = argc >= 10 ? atoi(argv[4]) : 1; 
+    const unsigned num_data_cols = argc >= 10 ? atoi(argv[5]) : atoi(argv[3]); 
+    const unsigned num_data_rows = argc >= 10 ? atoi(argv[6]) : atoi(argv[4]);     
+    const char distance_function = argc >= 10 ? argv[7][0] : argv[5][0]; 
+    const char linkage_function = argc >= 10 ? argv[8][0] : argv[6][0];     
+    const char* csv_path = argv[9];
 
     if (image_width < (tile_ratio_x * num_data_cols) || image_height < (tile_ratio_y * num_data_rows)) {
         std::cerr << std::endl << "Image dimensions are not enough to accomodate tile dimensions and amount of data." << std::endl;
-        std::cout << "Specifically, the following must be true: " << std::endl;
-        std::cout << " image_width >= (tile_ratio_x * num_data_cols)" << std::endl;
-        std::cout << " image_height >= (tile_ratio_y * num_data_rows)" << std::endl << std::endl;
+        std::cerr << "Specifically, the following must be true: " << std::endl;
+        std::cerr << " image_width >= (tile_ratio_x * num_data_cols)" << std::endl;
+        std::cerr << " image_height >= (tile_ratio_y * num_data_rows)" << std::endl << std::endl;
 
         return 1;
     }
@@ -429,14 +433,30 @@ int main(int argc, char* argv[])
     unsigned tile_height = scaling_factor * tile_ratio_y;
     // std::cerr << "tile_height: " << tile_height << std::endl;
 
-    if(argc >= 9 && g_schemes.find(argv[8]) == g_schemes.end()) {
+    if(argc >= 11 && g_schemes.find(argv[10]) == g_schemes.end()) {
         std::cerr << "Unknown colorscheme. Run " << argv[0] << " -l for a list of valid ones." << std::endl;
         return 1;
     }
-    const heatmap_colorscheme_t* colorscheme = argc == 9 ? g_schemes[argv[8]] : heatmap_cs_default;
+    const heatmap_colorscheme_t* colorscheme = argc == 11 ? g_schemes[argv[10]] : heatmap_cs_default;
 
 #endif
 
+    std::string possible_distance_functions = "cauxskeb";
+    if (possible_distance_functions.find(distance_function) == std::string::npos) {
+        std::cerr << std::endl << "Distance function given is not an option." << std::endl;
+        std::cerr << "See readme for more info" << std::endl;
+
+        return 1;
+    }
+
+    std::string possible_linkgae_functions = "smac";
+    if (possible_linkgae_functions.find(linkage_function) == std::string::npos) {
+        std::cerr << std::endl << "Linkage function given is not an option." << std::endl;
+        std::cerr << "See readme for more info" << std::endl;
+
+        return 1;
+    }
+    
     unsigned updated_image_width = tile_width * num_data_cols;
     // std::cerr << "updated_image_width: " << updated_image_width << std::endl;
     unsigned updated_image_height = tile_height * num_data_rows;
@@ -518,7 +538,7 @@ int main(int argc, char* argv[])
     for(unsigned i = 0; i < num_data_cols; ++i) {
         col_weight[i] = 1.0;
     }
-    Node* col_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, col_weight, 1, 'e', 'a', 0); ///// Hardcoding Euclidean distance and Average linkage for now
+    Node* col_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, col_weight, 1, distance_function, linkage_function, 0); ///// Hardcoding Euclidean distance and Average linkage for now
     if (!col_tree)
     {
         std::cerr << ("treecluster routine failed due to insufficient memory") << std::endl;
@@ -579,7 +599,7 @@ int main(int argc, char* argv[])
         row_weight[i] = 1.0
         ;
     }
-    Node* row_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, row_weight, 0, 'e', 'a', 0); ///// Hardcoding Euclidean distance and Average linkage for now
+    Node* row_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, row_weight, 0, distance_function, linkage_function, 0); ///// Hardcoding Euclidean distance and Average linkage for now
 
     if (!row_tree)
     {
