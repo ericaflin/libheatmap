@@ -182,7 +182,7 @@ std::map<std::string, const heatmap_colorscheme_t*> g_schemes = {
     {"YlOrRd_mixed_exp", heatmap_cs_YlOrRd_mixed_exp},
 };
 
-std::vector<std::string> reorder_strings(std::vector<std::string> label_names, int* indices, int n) 
+void reorder_strings(std::vector<std::string> &label_names, int* indices, int n) 
 { 
     std::vector<std::string> temp; 
   
@@ -198,11 +198,9 @@ std::vector<std::string> reorder_strings(std::vector<std::string> label_names, i
        label_names.at(i) = temp.at(i); 
     } 
 
-    return label_names;
-
 } 
 
-double **reorder_heatmap_rows(double **heatmap_data, int* index, int num_data_rows, int num_data_cols) 
+void reorder_heatmap_rows(double** &heatmap_data, int* index, int num_data_rows, int num_data_cols) 
 { 
     /*
     // Allocate memory
@@ -240,11 +238,9 @@ double **reorder_heatmap_rows(double **heatmap_data, int* index, int num_data_ro
     }
     free(temp);
 
-    return heatmap_data;
-
 } 
 
-double **reorder_heatmap_cols(double **heatmap_data, int* index, int num_data_rows, int num_data_cols) 
+void reorder_heatmap_cols(double** &heatmap_data, int* index, int num_data_rows, int num_data_cols) 
 { 
 
     double **temp = new double*[num_data_rows];
@@ -275,12 +271,10 @@ double **reorder_heatmap_cols(double **heatmap_data, int* index, int num_data_ro
     }
     free(temp);
 
-    return heatmap_data;
-
 } 
 
 
-int **reorder_mask_rows(int **mask, int* index, int num_data_rows, int num_data_cols) 
+void reorder_mask_rows(int** &mask, int* index, int num_data_rows, int num_data_cols) 
 { 
 
 
@@ -312,11 +306,9 @@ int **reorder_mask_rows(int **mask, int* index, int num_data_rows, int num_data_
     }
     free(temp);
 
-    return mask;
-
 } 
 
-int **reorder_mask_cols(int **mask, int* index, int num_data_rows, int num_data_cols) 
+void reorder_mask_cols(int** &mask, int* index, int num_data_rows, int num_data_cols) 
 { 
 
     double **temp = new double*[num_data_rows];
@@ -346,8 +338,6 @@ int **reorder_mask_cols(int **mask, int* index, int num_data_rows, int num_data_
         free(temp[i]);
     }
     free(temp);
-
-    return mask;
 
 } 
 
@@ -556,13 +546,12 @@ int main(int argc, char* argv[])
             col_sorted_index++;
         }
     }
-
     // Reorder column labels
-    col_names = reorder_strings(col_names, col_sorted_indices, num_data_cols);
+    reorder_strings(col_names, col_sorted_indices, num_data_cols);
     // Reorder heatmap columns
-    heatmap_data = reorder_heatmap_cols(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols);
+    reorder_heatmap_cols(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols);
     // Reorder mask columns
-    mask = reorder_mask_cols(mask, col_sorted_indices, num_data_rows, num_data_cols);
+    reorder_mask_cols(mask, col_sorted_indices, num_data_rows, num_data_cols);
 
     free(col_tree);
     free(col_weight);
@@ -608,25 +597,33 @@ int main(int argc, char* argv[])
         std::cerr << row_sorted_indices[ind] << std::endl;
 
     }
-
-    // Reorder row labels
-    row_names = reorder_strings(row_names, row_sorted_indices, num_data_rows);
-    // Reorder heatmap rows
-    heatmap_data = reorder_heatmap_rows(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols);
-    // Reorder mask
-    mask = reorder_mask_rows(mask, row_sorted_indices, num_data_rows, num_data_cols);
-
-    /*
-    std::cerr << "AFTER" << std::endl;
-    for (int i = 0; i < num_data_rows; i++)
+    std::cerr << "BEFORE" << std::endl;
+    for (unsigned i = 0; i < num_data_rows; i++)
     {
-        for (int j = 0; j < num_data_cols; j++)
+        for (unsigned j = 0; j < num_data_cols; j++)
         {
             std::cerr << heatmap_data[i][j] << ' ';
         }
         std::cerr << std::endl;
     }
-    */
+    // Reorder row labels
+    reorder_strings(row_names, row_sorted_indices, num_data_rows);
+    // Reorder heatmap rows
+    reorder_heatmap_rows(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols);
+    // Reorder mask
+    reorder_mask_rows(mask, row_sorted_indices, num_data_rows, num_data_cols);
+
+    
+    std::cerr << "AFTER" << std::endl;
+    for (unsigned i = 0; i < num_data_rows; i++)
+    {
+        for (unsigned j = 0; j < num_data_cols; j++)
+        {
+            std::cerr << heatmap_data[i][j] << ' ';
+        }
+        std::cerr << std::endl;
+    }
+    
     
     // Free memory used during hierarchical clustering
     free(row_tree);
