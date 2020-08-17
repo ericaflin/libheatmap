@@ -182,25 +182,27 @@ std::map<std::string, const heatmap_colorscheme_t*> g_schemes = {
     {"YlOrRd_mixed_exp", heatmap_cs_YlOrRd_mixed_exp},
 };
 
-void reorder_strings(std::vector<std::string> label_names, int* index, int n) 
+std::vector<std::string> reorder_strings(std::vector<std::string> label_names, int* indices, int n) 
 { 
     std::vector<std::string> temp; 
   
-    // col_names[i] should be present at index[i] index 
+    // indices's elements are the labels/indices of label_names
+    // indices's positions (element index) are the new positions (element index)
     for (int i=0; i<n; i++) {
-        temp.at(index[i]) = label_names.at(i); 
+        temp.push_back(label_names.at(indices[i])); 
     }
   
     // Copy temp[] to col_names[] 
     for (int i=0; i<n; i++) 
     {  
-       label_names.at(i)   = temp.at(i); 
-       // index.at(i) = i; 
+       label_names.at(i) = temp.at(i); 
     } 
+
+    return label_names;
 
 } 
 
-void reorder_heatmap_rows(double **heatmap_data, int* index, int num_data_rows, int num_data_cols) 
+double **reorder_heatmap_rows(double **heatmap_data, int* index, int num_data_rows, int num_data_cols) 
 { 
     /*
     // Allocate memory
@@ -217,10 +219,45 @@ void reorder_heatmap_rows(double **heatmap_data, int* index, int num_data_rows, 
 
         temp[i] = new double[num_data_cols];
 
+        // 
+        for (int j=0; j< num_data_cols; j++) 
+        {
+            temp[i][j] = heatmap_data[index[i]][j]; 
+        }
+    }
+  
+    // Copy temp[] to col_names[] 
+    for (int i=0; i<num_data_rows; i++) {
+        for (int j=0; j< num_data_cols; j++) {
+            heatmap_data[i][j] = temp[i][j]; 
+            // index[i] = i;
+        }
+    }
+
+    // Deallocate memory
+    for(int i = 0; i < num_data_rows; ++i) {
+        free(temp[i]);
+    }
+    free(temp);
+
+    return heatmap_data;
+
+} 
+
+double **reorder_heatmap_cols(double **heatmap_data, int* index, int num_data_rows, int num_data_cols) 
+{ 
+
+    double **temp = new double*[num_data_rows];
+
+    for (int i = 0; i < num_data_rows; i++ )
+    {
+
+        temp[i] = new double[num_data_cols];
+
         // heatmap_data[i][j] should be of row represented by index[i]'s index 
         for (int j=0; j< num_data_cols; j++) 
         {
-            temp[index[i]][j] = heatmap_data[i][j]; 
+            temp[i][j] = heatmap_data[i][index[j]]; 
         }
     }
   
@@ -238,44 +275,12 @@ void reorder_heatmap_rows(double **heatmap_data, int* index, int num_data_rows, 
     }
     free(temp);
 
-} 
-
-void reorder_heatmap_cols(double **heatmap_data, int* index, int num_data_rows, int num_data_cols) 
-{ 
-
-    double **temp = new double*[num_data_rows];
-
-    for (int i = 0; i < num_data_rows; i++ )
-    {
-
-        temp[i] = new double[num_data_cols];
-
-        // heatmap_data[i][j] should be of row represented by index[i]'s index 
-        for (int j=0; j< num_data_cols; j++) 
-        {
-            temp[i][index[i]] = heatmap_data[i][j]; 
-        }
-    }
-  
-    // Copy temp[] to col_names[] 
-    for (int i=0; i<num_data_rows; i++) {
-        for (int j=0; j< num_data_cols; j++) {
-            heatmap_data[i][j]   = temp[i][j]; 
-            // index[i] = i;
-        }
-    }
-
-    // Deallocate memory
-    for(int i = 0; i < num_data_rows; ++i) {
-        free(temp[i]);
-    }
-    free(temp);
-
+    return heatmap_data;
 
 } 
 
 
-void reorder_mask_rows(int **mask, int* index, int num_data_rows, int num_data_cols) 
+int **reorder_mask_rows(int **mask, int* index, int num_data_rows, int num_data_cols) 
 { 
 
 
@@ -289,7 +294,7 @@ void reorder_mask_rows(int **mask, int* index, int num_data_rows, int num_data_c
         // heatmap_data[i][j] should be of row represented by index[i]'s index 
         for (int j=0; j< num_data_cols; j++) 
         {
-            temp[index[i]][j] = mask[i][j]; 
+            temp[i][j] = mask[index[i]][j]; 
         }
     }
   
@@ -307,10 +312,11 @@ void reorder_mask_rows(int **mask, int* index, int num_data_rows, int num_data_c
     }
     free(temp);
 
+    return mask;
 
 } 
 
-void reorder_mask_cols(int **mask, int* index, int num_data_rows, int num_data_cols) 
+int **reorder_mask_cols(int **mask, int* index, int num_data_rows, int num_data_cols) 
 { 
 
     double **temp = new double*[num_data_rows];
@@ -323,7 +329,7 @@ void reorder_mask_cols(int **mask, int* index, int num_data_rows, int num_data_c
         // heatmap_data[i][j] should be of row represented by index[i]'s index 
         for (int j=0; j< num_data_cols; j++) 
         {
-            temp[i][index[i]] = mask[i][j]; 
+            temp[i][j] = mask[i][index[j]]; 
         }
     }
   
@@ -340,11 +346,13 @@ void reorder_mask_cols(int **mask, int* index, int num_data_rows, int num_data_c
         free(temp[i]);
     }
     free(temp);
+
+    return mask;
 
 } 
 
 int main(int argc, char* argv[])
-{
+{  
     clock_t start, mid, mid2, end;
 
     start = clock();
@@ -444,13 +452,13 @@ int main(int argc, char* argv[])
     unsigned updated_image_height = tile_height * num_data_rows;
     // std::cerr << "updated_image_height: " << updated_image_height << std::endl;
 
-
     // Processing heatmap CSV data
-    // Allocating 2D data array as a 1D array
+
     double **heatmap_data = new double*[num_data_rows];
-    for(unsigned int i = 0; i < num_data_rows; ++i) {
+    for(unsigned i = 0; i < num_data_rows; i++) {
         heatmap_data[i] = new double[num_data_cols];
     }
+
     // Allocate array of data's column names
     std::vector<std::string> col_names;
     // Allocate array of data's row names
@@ -458,7 +466,7 @@ int main(int argc, char* argv[])
 
     // Mask for missing data, needed by the hierarchical clustering algorithm
     int **mask = new int*[num_data_rows];
-    for(unsigned int i = 0; i < num_data_rows; ++i) {
+    for(unsigned i = 0; i < num_data_rows; i++) {
         mask[i] = new int[num_data_cols];
     }
 
@@ -470,7 +478,8 @@ int main(int argc, char* argv[])
     }
 
     float weight;
-    unsigned int row_num = 0;
+    unsigned row_num = 0;
+    unsigned col_num = 0;
 
     std::ifstream  data(csv_path);
     std::string line;
@@ -479,44 +488,48 @@ int main(int argc, char* argv[])
         std::stringstream  lineStream(line);
         std::string        cell;
         
-        unsigned int col_num = 0;
+        col_num = 0;
 
         while(std::getline(lineStream,cell,','))
         {
-            if (row_num == 0 && col_num != 0){
+            if (row_num == 0 && col_num == 0) {
+                col_num += 1;
+                continue;
+            }
+            else if (row_num == 0){
                 col_names.push_back(std::string(cell));
             }
             else if (col_num == 0){
                 row_names.push_back(std::string(cell));
-                col_num += 1;
+
             }
             else {
                 weight = std::stof(cell);
-                heatmap_data[row_num][col_num] = weight;
-                if (!weight) {  ///// Test that this is the correct way to check for empty CSV cell
-                    mask[row_num][col_num] = 0;
+                heatmap_data[row_num-1][col_num-1] = weight;
+                if (!weight) {
+                    mask[row_num-1][col_num-1] = 0;
                 }
                 else {
-                    mask[row_num][col_num] = 1;
+                    mask[row_num-1][col_num-1] = 1;
                 }
-                col_num += 1;
             }
+
+            col_num += 1;
         }
         row_num += 1;
     }
 
     /* =========================== Hierarchical clustering =========================== */
-
-    unsigned int col_nnodes = num_data_cols-1;
-    unsigned int row_nnodes = num_data_rows-1;
+    
+    unsigned col_nnodes = num_data_cols-1;
 
     // Get dendrogram tree for column data
     double *col_weight = new double[num_data_cols];
-    for(unsigned int i = 0; i < num_data_cols; ++i) {
+    for(unsigned i = 0; i < num_data_cols; ++i) {
         col_weight[i] = 1.0;
     }
-    Node* column_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, col_weight, 1, 'e', 'a', 0); ///// Hardcoding Euclidean distance and Average linkage for now
-    if (!column_tree)
+    Node* col_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, col_weight, 1, 'e', 'a', 0); ///// Hardcoding Euclidean distance and Average linkage for now
+    if (!col_tree)
     {
         std::cerr << ("treecluster routine failed due to insufficient memory") << std::endl;
         free(col_weight);
@@ -525,32 +538,40 @@ int main(int argc, char* argv[])
 
     // Print tree data
     std::cerr << "Node     Item 1   Item 2    Distance\n" << std::endl;
-    for(unsigned int i=0; i<col_nnodes; i++){
-        std::cerr << -i-1 << "  " << column_tree[i].left << "  " << column_tree[i].right << "  " << column_tree[i].distance << std::endl;
+    for(unsigned i=0; i<col_nnodes; i++){
+        std::cerr << -i-1 << "     " << col_tree[i].left << "     " << col_tree[i].right << "     " << col_tree[i].distance << std::endl;
     }
-
-    free(column_tree);
 
     // Sort column tree nodes
-    double *col_order_vals = new double[col_nnodes + 1];
-    for(unsigned int i = 0; i < num_data_cols; ++i) {
-        col_order_vals[i] = column_tree[i].distance; //// ?? Why does this have to be dimension nnodes +1 ?? I don't think my length is correct
+    int *col_sorted_indices = new int[num_data_cols];
+
+    unsigned col_sorted_index = 0;
+    for (unsigned i = 0; i < col_nnodes; i++) {
+        if (col_tree[i].left >= 0) {
+            col_sorted_indices[col_sorted_index] = col_tree[i].left;
+            col_sorted_index++;
+        }
+        if (col_tree[i].right >= 0) {
+            col_sorted_indices[col_sorted_index] = col_tree[i].right;
+            col_sorted_index++;
+        }
     }
-    int *col_sorted_indices = new int[col_nnodes + 1];
-    int sort_success = sorttree(col_nnodes, column_tree, col_order_vals, col_sorted_indices);
-    if (sort_success == 0) {
-        std::cerr << "Memory allocation error!" << std::endl;
-    }
+
     // Reorder column labels
-    reorder_strings(col_names, col_sorted_indices, num_data_cols);
+    col_names = reorder_strings(col_names, col_sorted_indices, num_data_cols);
     // Reorder heatmap columns
-    reorder_heatmap_cols(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols);
-    // Reorder mask
-    reorder_mask_cols(mask, col_sorted_indices, num_data_rows, num_data_cols);
+    heatmap_data = reorder_heatmap_cols(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols);
+    // Reorder mask columns
+    mask = reorder_mask_cols(mask, col_sorted_indices, num_data_rows, num_data_cols);
+
+    free(col_tree);
+    free(col_weight);
+    
+    unsigned row_nnodes = num_data_rows-1;
 
     ///Get dendrogram for row data
     double *row_weight = new double[num_data_rows];
-    for(unsigned int i = 0; i < num_data_rows; ++i) {
+    for(unsigned i = 0; i < num_data_rows; ++i) {
         row_weight[i] = 1.0
         ;
     }
@@ -564,47 +585,66 @@ int main(int argc, char* argv[])
     }
     // Print tree data
     std::cerr << "Node     Item 1   Item 2    Distance" << std::endl;
-    for(unsigned int i=0; i<row_nnodes; i++){
+    for(unsigned i=0; i<row_nnodes; i++){
         std::cerr << -i-1 << "  " << row_tree[i].left << "  " << row_tree[i].right << "  " << row_tree[i].distance << std::endl;
     }
-    free(row_tree);
 
+    // Sort row tree nodes
+    int *row_sorted_indices = new int[num_data_rows];
 
-    // Sort column tree nodes
-    double *row_order_vals = new double[row_nnodes + 1];
-    for(unsigned int i = 0; i < num_data_rows; ++i) {
-        row_order_vals[i] = row_tree[i].distance; //// ?? Why does this have to be dimension nnodes +1 ?? 
+    unsigned row_sorted_index = 0;
+    for (unsigned i = 0; i < row_nnodes; i++) {
+        if (row_tree[i].left >= 0) {
+            row_sorted_indices[row_sorted_index] = row_tree[i].left;
+            row_sorted_index++;
+        }
+        if (row_tree[i].right >= 0) {
+            row_sorted_indices[row_sorted_index] = row_tree[i].right;
+            row_sorted_index++;
+        }
     }
-    int *row_sorted_indices = new int[row_nnodes + 1];
-    sort_success = sorttree(row_nnodes, row_tree, row_order_vals, row_sorted_indices);
-    if (sort_success == 0) {
-        std::cerr << "Memory allocation error!" << std::endl;
+
+    for (unsigned ind = 0; ind < num_data_rows; ind++){
+        std::cerr << row_sorted_indices[ind] << std::endl;
+
     }
 
-    // Reorder column labels
-    reorder_strings(row_names, row_sorted_indices, num_data_rows);
-    // Reorder heatmap columns
-    reorder_heatmap_rows(heatmap_data, col_sorted_indices, num_data_rows, num_data_cols);
+    // Reorder row labels
+    row_names = reorder_strings(row_names, row_sorted_indices, num_data_rows);
+    // Reorder heatmap rows
+    heatmap_data = reorder_heatmap_rows(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols);
     // Reorder mask
-    reorder_mask_rows(mask, col_sorted_indices, num_data_rows, num_data_cols);
+    mask = reorder_mask_rows(mask, row_sorted_indices, num_data_rows, num_data_cols);
 
+    /*
+    std::cerr << "AFTER" << std::endl;
+    for (int i = 0; i < num_data_rows; i++)
+    {
+        for (int j = 0; j < num_data_cols; j++)
+        {
+            std::cerr << heatmap_data[i][j] << ' ';
+        }
+        std::cerr << std::endl;
+    }
+    */
+    
     // Free memory used during hierarchical clustering
-    free(col_weight);
+    free(row_tree);
     free(row_weight);
-
+    
 
     /* ============================ Generating heatmap pixels ============================ */
-
+    /*
     heatmap_t* hm = heatmap_new(updated_image_width, updated_image_height);
     heatmap_stamp_t* tile = heatmap_stamp_gen(tile_width, tile_height);
 
-    unsigned int x, y;
+    unsigned x, y;
 
-    for (unsigned int cur_row = 0; cur_row < num_data_rows; cur_row++) {
+    for (unsigned cur_row = 0; cur_row < num_data_rows; cur_row++) {
 
         y = (cur_row - 0.5) * tile_height;
 
-        for (unsigned int cur_col = 0; cur_col < num_data_cols; cur_col++) {
+        for (unsigned cur_col = 0; cur_col < num_data_cols; cur_col++) {
             x = (cur_col - 0.5) * tile_width;
             weight = heatmap_data[cur_row][cur_col];
 
@@ -637,7 +677,7 @@ int main(int argc, char* argv[])
 
 
     // De-allocating data arrays
-    for(unsigned int
+    for(unsigned
      i = 0; i < num_data_rows; ++i) {
         delete [] heatmap_data[i];
     }
@@ -660,6 +700,7 @@ int main(int argc, char* argv[])
     std::cerr << "PNG generation (second half) : " << std::fixed 
          << time_taken_2 << std::setprecision(5); 
     std::cerr << " sec " << std::endl; 
-
+    
+    */
     return 0;
 }
