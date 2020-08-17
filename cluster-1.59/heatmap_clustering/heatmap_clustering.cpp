@@ -526,11 +526,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    /*
     // Print tree data
     std::cerr << "Node     Item 1   Item 2    Distance\n" << std::endl;
     for(unsigned i=0; i<col_nnodes; i++){
         std::cerr << -i-1 << "     " << col_tree[i].left << "     " << col_tree[i].right << "     " << col_tree[i].distance << std::endl;
     }
+    */
 
     // Sort column tree nodes
     int *col_sorted_indices = new int[num_data_cols];
@@ -546,6 +548,19 @@ int main(int argc, char* argv[])
             col_sorted_index++;
         }
     }
+
+    /*
+    std::cerr << "BEFORE" << std::endl;
+    for (unsigned i = 0; i < num_data_rows; i++)
+    {
+        for (unsigned j = 0; j < num_data_cols; j++)
+        {
+            std::cerr << heatmap_data[i][j] << ' ';
+        }
+        std::cerr << std::endl;
+    }
+    */
+
     // Reorder column labels
     reorder_strings(col_names, col_sorted_indices, num_data_cols);
     // Reorder heatmap columns
@@ -572,11 +587,6 @@ int main(int argc, char* argv[])
         free(row_weight);
         return 1;
     }
-    // Print tree data
-    std::cerr << "Node     Item 1   Item 2    Distance" << std::endl;
-    for(unsigned i=0; i<row_nnodes; i++){
-        std::cerr << -i-1 << "  " << row_tree[i].left << "  " << row_tree[i].right << "  " << row_tree[i].distance << std::endl;
-    }
 
     // Sort row tree nodes
     int *row_sorted_indices = new int[num_data_rows];
@@ -593,37 +603,12 @@ int main(int argc, char* argv[])
         }
     }
 
-    for (unsigned ind = 0; ind < num_data_rows; ind++){
-        std::cerr << row_sorted_indices[ind] << std::endl;
-
-    }
-    std::cerr << "BEFORE" << std::endl;
-    for (unsigned i = 0; i < num_data_rows; i++)
-    {
-        for (unsigned j = 0; j < num_data_cols; j++)
-        {
-            std::cerr << heatmap_data[i][j] << ' ';
-        }
-        std::cerr << std::endl;
-    }
     // Reorder row labels
     reorder_strings(row_names, row_sorted_indices, num_data_rows);
     // Reorder heatmap rows
     reorder_heatmap_rows(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols);
     // Reorder mask
     reorder_mask_rows(mask, row_sorted_indices, num_data_rows, num_data_cols);
-
-    
-    std::cerr << "AFTER" << std::endl;
-    for (unsigned i = 0; i < num_data_rows; i++)
-    {
-        for (unsigned j = 0; j < num_data_cols; j++)
-        {
-            std::cerr << heatmap_data[i][j] << ' ';
-        }
-        std::cerr << std::endl;
-    }
-    
     
     // Free memory used during hierarchical clustering
     free(row_tree);
@@ -631,7 +616,7 @@ int main(int argc, char* argv[])
     
 
     /* ============================ Generating heatmap pixels ============================ */
-    /*
+    
     heatmap_t* hm = heatmap_new(updated_image_width, updated_image_height);
     heatmap_stamp_t* tile = heatmap_stamp_gen(tile_width, tile_height);
 
@@ -639,10 +624,10 @@ int main(int argc, char* argv[])
 
     for (unsigned cur_row = 0; cur_row < num_data_rows; cur_row++) {
 
-        y = (cur_row - 0.5) * tile_height;
+        y = ((cur_row+1) - 0.5) * tile_height;
 
         for (unsigned cur_col = 0; cur_col < num_data_cols; cur_col++) {
-            x = (cur_col - 0.5) * tile_width;
+            x = ((cur_col+1) - 0.5) * tile_width;
             weight = heatmap_data[cur_row][cur_col];
 
             if(x < updated_image_width && y < updated_image_height) {
@@ -698,6 +683,6 @@ int main(int argc, char* argv[])
          << time_taken_2 << std::setprecision(5); 
     std::cerr << " sec " << std::endl; 
     
-    */
+    
     return 0;
 }
