@@ -14,10 +14,10 @@ First, run '$ make' to build the programs. There are two programs in the folder 
      - num_data_rows: Number of data rows in the input CSV data file (exclude the labels)
      - distance_function: Distance function for hierarchical clustering. Options are 
           - 'a': Distance between the two cluster centroids (arithmetic mean)
-          - ‘m’ Distance between the two cluster centroids (median);
-          - ‘s’ Shortest pairwise distance between elements in the two clusters;
-          - ‘x’ Longest pairwise distance between elements in the two clusters;
-          - ‘v’ Average over the pairwise distances between elements in the two clusters.
+          - ‘m’: Distance between the two cluster centroids (median);
+          - ‘s’: Shortest pairwise distance between elements in the two clusters;
+          - ‘x’: Longest pairwise distance between elements in the two clusters;
+          - ‘v’: Average over the pairwise distances between elements in the two clusters.
      - linkage_function: Linkage function for hierarchical clustering. 
           - ’s’: pairwise single-linkage clustering
           - ’m’: pairwise maximum- (or complete-) linkage clustering

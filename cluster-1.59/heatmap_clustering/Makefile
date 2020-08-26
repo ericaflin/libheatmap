@@ -26,11 +26,12 @@ CFLAGS+=-fPIC -I. -pedantic
 CXXFLAGS+=-fPIC -I. -std=c++0x
 LDFLAGS+=-lm
 
-all: libheatmap.a libheatmap.so heatmap_clustering
+all: libheatmap.a libheatmap.so heatmap_clustering heatmap_clustering_js_module
 clean:
 	rm -f libheatmap.a
 	rm -f libheatmap.so
 	rm -f heatmap_clustering heatmap_clustering.o cluster.o 
+	rm -f heatmap_clustering_js_module heatmap_clustering_js_module.o cluster.o 
 	rm -f lodepng_cpp.o lodepng_c.o
 
 
@@ -47,6 +48,12 @@ heatmap_clustering: heatmap_clustering.o cluster.o lodepng_cpp.o libheatmap.a
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 heatmap_clustering.o: heatmap_clustering.cpp cluster.h
+	$(CXX) -c $< $(CXXFLAGS) -DFIT_IMAGE -o $@
+
+heatmap_clustering_js_module: heatmap_clustering_js_module.o cluster.o lodepng_cpp.o libheatmap.a
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+heatmap_clustering_js_module.o: heatmap_clustering_js_module.cpp cluster.h
 	$(CXX) -c $< $(CXXFLAGS) -DFIT_IMAGE -o $@
 
 libheatmap.a: heatmap.o $(patsubst %.c,%.o,$(wildcard colorschemes/*.c))
