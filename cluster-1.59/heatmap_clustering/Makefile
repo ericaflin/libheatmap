@@ -50,7 +50,7 @@ heatmap_clustering: heatmap_clustering.o cluster.o lodepng_cpp.o libheatmap.a
 heatmap_clustering.o: heatmap_clustering.cpp cluster.h
 	$(CXX) -c $< $(CXXFLAGS) -DFIT_IMAGE -o $@
 
-heatmap_clustering_js_module: heatmap_clustering_js_module.o cluster.o lodepng_cpp.o libheatmap.a
+heatmap_clustering_js_module: heatmap_clustering_js_module.o cluster.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 heatmap_clustering_js_module.o: heatmap_clustering_js_module.cpp cluster.h
