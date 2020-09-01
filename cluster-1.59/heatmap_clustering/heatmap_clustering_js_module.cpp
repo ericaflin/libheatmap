@@ -80,13 +80,11 @@ void reorder_matrix(T** &matrix, int* index, int num_data_rows, int num_data_col
 
 } 
 
-int main(int argc, char* argv[])
+int main()
 {  
-    (void)argc;
     
     clock_t start, mid, mid2, end;
     start = clock();
-
 
     std::string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:r}";
 
@@ -444,6 +442,7 @@ int main(int argc, char* argv[])
 
     mid2 = clock();
 
+    /*
     std::cerr << "AFTER" << std::endl;
     for (int i = 0; i < num_data_rows; i++)
     {
@@ -453,9 +452,10 @@ int main(int argc, char* argv[])
         }
         std::cerr << std::endl;
     }
+    */
 
     /* =========================== Output Generation (Stringifying) =========================== */
-/*
+
     std::string output = "{heatmap:[";
     for (int i = 0; i < num_data_rows; i++ )
     {
@@ -502,15 +502,14 @@ int main(int argc, char* argv[])
 
     output.append("}");
 
-    std::cerr << output << std::endl;
-*/
+    std::cerr << std::endl << "OUTPUT" << std::endl << output << std::endl << std::endl ;
+
     // De-allocating data arrays
     for(int i = 0; i < num_data_rows; ++i) {
         delete [] heatmap_data[i];
     }
     delete [] heatmap_data;
 
-/*
     end = clock();
     double time_input = double(mid-start)/double(CLOCKS_PER_SEC);
     double time_clustering = double(mid2-mid)/double(CLOCKS_PER_SEC);
@@ -529,6 +528,6 @@ int main(int argc, char* argv[])
     std::cerr << "Overall time taken by program is : " << std::fixed 
          << time_taken_overall << std::setprecision(5); 
     std::cerr << " sec " << std::endl; 
-*/
+
     return 0;
 }
