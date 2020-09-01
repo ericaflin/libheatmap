@@ -1,27 +1,3 @@
-/* heatmap - High performance heatmap creation in C.
- *
- * The MIT License (MIT)
- *
- * Copyright (c) 2013 Lucas Beyer
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -29,6 +5,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <string.h>
 
 extern "C" {
     #include "cluster.h"
@@ -46,7 +23,6 @@ class Leaf : public TreeNode {
     public:
         std::string Label;
 };
-
 
 void reorder_strings(std::vector<std::string> &label_names, int* indices, int n) 
 { 
@@ -107,10 +83,12 @@ void reorder_matrix(T** &matrix, int* index, int num_data_rows, int num_data_col
 int main(int argc, char* argv[])
 {  
     (void)argc;
+    
     clock_t start, mid, mid2, end;
     start = clock();
 
-    std::string input = argv[1];
+
+    std::string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:r}";
 
     /* =========================== Input Parsing (Destringifying) =========================== */
 
@@ -129,16 +107,20 @@ int main(int argc, char* argv[])
     for(std::string line; std::getline(input_stream, line); ) {
         tmp_string = std::string(line);
         if (arg_num == 0) {
-            std::string heatmap_input(tmp_string.begin()+15, tmp_string.end()-2);  // also getting rid of the '[' and ']' at the beginning and the end -- makes parsing later easier
+            // front padding: 16, back padding: 2
+            heatmap_input = tmp_string.substr(16, tmp_string.length()-16-2);  // also getting rid of the '[' and ']' at the beginning and the end -- makes parsing later easier
         }
         if (arg_num == 1) {
-            std::string distance_function(tmp_string.begin()+18, tmp_string.end()-1);
+            // front padding: 18, back padding: 1
+            _distance_function = tmp_string.substr(18, tmp_string.length()-18-1);
         }
         if (arg_num == 2) {
-            std::string linkage_function(tmp_string.begin()+17, tmp_string.end()-1);
+            // front padding: 17, back padding: 1
+            _linkage_function = tmp_string.substr(17, tmp_string.length()-17-1);
         }
         if (arg_num == 3) {
-            std::string axes(tmp_string.begin()+5, tmp_string.end()-1);
+            // front padding: 5, back padding: 1
+            axes = tmp_string.substr(5, tmp_string.length()-5-1);
         }
         arg_num += 1;
     }    
@@ -154,10 +136,18 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::string possible_linkgae_functions = "smac";
-    if (possible_linkgae_functions.find(linkage_function) == std::string::npos) {
+    std::string possible_linkage_functions = "smac";
+    if (possible_linkage_functions.find(linkage_function) == std::string::npos) {
         std::cerr << std::endl << "Linkage function given is not an option." << std::endl;
         std::cerr << "See readme for more info" << std::endl;
+
+        return 1;
+    }
+
+    std::string possible_dendro_axes = "rcb";
+    if (possible_dendro_axes.find(axes) == std::string::npos) {
+        std::cerr << std::endl << "Axes given is not an option." << std::endl;
+        std::cerr << "Should be 'r', 'c', or 'b' (row / col / both)" << std::endl;
 
         return 1;
     }
@@ -173,8 +163,8 @@ int main(int argc, char* argv[])
 
     int _second_bracket_idx = heatmap_input.find('[');
     int second_bracket_idx = heatmap_input.find('[', _second_bracket_idx+1);
-    int num_data_cols = std::count(heatmap_input.begin(), heatmap_input.begin()+second_bracket_idx, ',');
-    int num_data_rows = std::count(heatmap_input.begin(), heatmap_input.end(), '[') - 2; // subtract 2 to account for the extra '[' for a 2D array, and for the label row
+    int num_data_cols = std::count(heatmap_input.begin(), heatmap_input.begin()+second_bracket_idx, ',') - 1; // subtract 1 to account for the comma separating rows
+    int num_data_rows = std::count(heatmap_input.begin(), heatmap_input.end(), '[') - 1; // subtract 1 to account for the label row
 
     // Processing heatmap CSV data
     double **heatmap_data = new double*[num_data_rows];
@@ -208,27 +198,36 @@ int main(int argc, char* argv[])
 
         while(std::getline(lineStream,cell,','))
         {
+            // corner 0,0 is empty
             if (row_num == 0 && col_num == 0) {
                 col_num += 1;
                 continue;
             }
+            // column label
             else if (row_num == 0){
                 col_names.push_back(std::string(cell));
             }
+            // skip the first comma ("first column"), since it's just the comma separating rows
             else if (col_num == 0){
-                std::string _row_label = std::string(cell);
-                std::string row_label(_row_label.begin()+2, _row_label.end()); // to get rid of the extra ',[' at the front
-                row_names.push_back(row_label);
-
+                col_num += 1;
+                continue;
             }
+            // row label
+            else if (col_num == 1){
+                std::string _row_label = std::string(cell);
+                std::string row_label(_row_label.begin()+1, _row_label.end()); // to get rid of the extra '[' at the front
+                row_names.push_back(row_label);
+            }
+            // heatmap data cell
             else {
                 weight = std::stof(cell);
-                heatmap_data[row_num-1][col_num-1] = weight;
+
+                heatmap_data[row_num-1][col_num-2] = weight;
                 if (!weight) {
-                    mask[row_num-1][col_num-1] = 0;
+                    mask[row_num-1][col_num-2] = 0;
                 }
                 else {
-                    mask[row_num-1][col_num-1] = 1;
+                    mask[row_num-1][col_num-2] = 1;
                 }
             }
 
@@ -240,6 +239,7 @@ int main(int argc, char* argv[])
     mid = clock();
 
     /* =========================== Hierarchical clustering =========================== */
+
     std::map<int, TreeNode> col_node_dict;
     int cur_col_node_id = -1;
     std::map<int, TreeNode> row_node_dict;
@@ -282,17 +282,6 @@ int main(int argc, char* argv[])
             }
         }
 
-        /*
-        std::cerr << "BEFORE" << std::endl;
-        for (int i = 0; i < num_data_rows; i++)
-        {
-            for (int j = 0; j < num_data_cols; j++)
-            {
-                std::cerr << heatmap_data[i][j] << ' ';
-            }
-            std::cerr << std::endl;
-        }
-        */
 
         // Reorder column labels
         reorder_strings(col_names, col_sorted_indices, num_data_cols);
@@ -351,6 +340,7 @@ int main(int argc, char* argv[])
             }
             std::cerr << std::endl;
             */
+
 
             col_node_dict[cur_col_node_id] = new_tree_node;
             cur_col_node_id--;
@@ -454,8 +444,18 @@ int main(int argc, char* argv[])
 
     mid2 = clock();
 
-    /* =========================== Output Generation (Stringifying) =========================== */
+    std::cerr << "AFTER" << std::endl;
+    for (int i = 0; i < num_data_rows; i++)
+    {
+        for (int j = 0; j < num_data_cols; j++)
+        {
+            std::cerr << heatmap_data[i][j] << ' ';
+        }
+        std::cerr << std::endl;
+    }
 
+    /* =========================== Output Generation (Stringifying) =========================== */
+/*
     std::string output = "{heatmap:[";
     for (int i = 0; i < num_data_rows; i++ )
     {
@@ -503,13 +503,14 @@ int main(int argc, char* argv[])
     output.append("}");
 
     std::cerr << output << std::endl;
-
+*/
     // De-allocating data arrays
     for(int i = 0; i < num_data_rows; ++i) {
         delete [] heatmap_data[i];
     }
     delete [] heatmap_data;
 
+/*
     end = clock();
     double time_input = double(mid-start)/double(CLOCKS_PER_SEC);
     double time_clustering = double(mid2-mid)/double(CLOCKS_PER_SEC);
@@ -528,6 +529,6 @@ int main(int argc, char* argv[])
     std::cerr << "Overall time taken by program is : " << std::fixed 
          << time_taken_overall << std::setprecision(5); 
     std::cerr << " sec " << std::endl; 
-
+*/
     return 0;
 }
