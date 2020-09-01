@@ -6,27 +6,27 @@
 #include <map>
 #include <vector>
 #include <string.h>
-
 extern "C" {
     #include "cluster.h"
 }
+using namespace std;
 
 class TreeNode {
     public:
         int NodeId;
         float Height;
-        std::vector<int> Indices;
-        std::vector<TreeNode> Children;
+        vector<int> Indices;
+        vector<TreeNode> Children;
 };
 
 class Leaf : public TreeNode {
     public:
-        std::string Label;
+        string Label;
 };
 
-void reorder_strings(std::vector<std::string> &label_names, int* indices, int n) 
+void reorder_strings(vector<string> &label_names, int* indices, int n) 
 { 
-    std::vector<std::string> temp; 
+    vector<string> temp; 
     // indices's elements are the labels/indices of label_names
     // indices's positions (element index) are the new positions (element index)
     for (int i=0; i<n; i++) {
@@ -43,9 +43,9 @@ void reorder_strings(std::vector<std::string> &label_names, int* indices, int n)
 template <typename T>
 void reorder_matrix(T** &matrix, int* index, int num_data_rows, int num_data_cols, char axis) 
 { 
-    std::string possible_axes = "rc";
-    if (possible_axes.find(axis) == std::string::npos) {
-        std::cerr << std::endl << "Axis value must be 'r' (row) or 'c' (column)" << std::endl;
+    string possible_axes = "rc";
+    if (possible_axes.find(axis) == string::npos) {
+        cerr << endl << "Axis value must be 'r' (row) or 'c' (column)" << endl;
         return;
     }
 
@@ -86,24 +86,24 @@ int main()
     clock_t start, mid, mid2, end;
     start = clock();
 
-    std::string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:r}";
+    string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:r}";
 
     /* =========================== Input Parsing (Destringifying) =========================== */
 
     // Args: heatmap_input, distance_function, linkage_function, axes (which dendrograms -- rows/cols/both)) -- parse these args from incoming string
 
     // Intaking data
-    std::string heatmap_input;
-    std::string _distance_function;
-    std::string _linkage_function;
-    std::string axes;
+    string heatmap_input;
+    string _distance_function;
+    string _linkage_function;
+    string axes;
 
-    std::stringstream  input_stream(input);
-    std::string tmp_string = "";
+    stringstream  input_stream(input);
+    string tmp_string = "";
     int arg_num = 0;
 
-    for(std::string line; std::getline(input_stream, line); ) {
-        tmp_string = std::string(line);
+    for(string line; getline(input_stream, line); ) {
+        tmp_string = string(line);
         if (arg_num == 0) {
             // front padding: 16, back padding: 2
             heatmap_input = tmp_string.substr(16, tmp_string.length()-16-2);  // also getting rid of the '[' and ']' at the beginning and the end -- makes parsing later easier
@@ -126,26 +126,26 @@ int main()
     // Checking for valid inputs and setting up additional parameters
     char distance_function = _distance_function[0];
     char linkage_function = _linkage_function[0];
-    std::string possible_distance_functions = "cauxskeb";
-    if (possible_distance_functions.find(distance_function) == std::string::npos) {
-        std::cerr << std::endl << "Distance function given is not an option." << std::endl;
-        std::cerr << "See readme for more info" << std::endl;
+    string possible_distance_functions = "cauxskeb";
+    if (possible_distance_functions.find(distance_function) == string::npos) {
+        cerr << endl << "Distance function given is not an option." << endl;
+        cerr << "See readme for more info" << endl;
 
         return 1;
     }
 
-    std::string possible_linkage_functions = "smac";
-    if (possible_linkage_functions.find(linkage_function) == std::string::npos) {
-        std::cerr << std::endl << "Linkage function given is not an option." << std::endl;
-        std::cerr << "See readme for more info" << std::endl;
+    string possible_linkage_functions = "smac";
+    if (possible_linkage_functions.find(linkage_function) == string::npos) {
+        cerr << endl << "Linkage function given is not an option." << endl;
+        cerr << "See readme for more info" << endl;
 
         return 1;
     }
 
-    std::string possible_dendro_axes = "rcb";
-    if (possible_dendro_axes.find(axes) == std::string::npos) {
-        std::cerr << std::endl << "Axes given is not an option." << std::endl;
-        std::cerr << "Should be 'r', 'c', or 'b' (row / col / both)" << std::endl;
+    string possible_dendro_axes = "rcb";
+    if (possible_dendro_axes.find(axes) == string::npos) {
+        cerr << endl << "Axes given is not an option." << endl;
+        cerr << "Should be 'r', 'c', or 'b' (row / col / both)" << endl;
 
         return 1;
     }
@@ -161,8 +161,8 @@ int main()
 
     int _second_bracket_idx = heatmap_input.find('[');
     int second_bracket_idx = heatmap_input.find('[', _second_bracket_idx+1);
-    int num_data_cols = std::count(heatmap_input.begin(), heatmap_input.begin()+second_bracket_idx, ',') - 1; // subtract 1 to account for the comma separating rows
-    int num_data_rows = std::count(heatmap_input.begin(), heatmap_input.end(), '[') - 1; // subtract 1 to account for the label row
+    int num_data_cols = count(heatmap_input.begin(), heatmap_input.begin()+second_bracket_idx, ',') - 1; // subtract 1 to account for the comma separating rows
+    int num_data_rows = count(heatmap_input.begin(), heatmap_input.end(), '[') - 1; // subtract 1 to account for the label row
 
     // Processing heatmap CSV data
     double **heatmap_data = new double*[num_data_rows];
@@ -171,9 +171,9 @@ int main()
     }
 
     // Allocate array of data's column names
-    std::vector<std::string> col_names;
+    vector<string> col_names;
     // Allocate array of data's row names
-    std::vector<std::string> row_names;
+    vector<string> row_names;
 
     // Mask for missing data, needed by the hierarchical clustering algorithm
     int **mask = new int*[num_data_rows];
@@ -185,16 +185,16 @@ int main()
     int row_num = 0;
     int col_num = 0;
 
-    std::stringstream  data(heatmap_input);
-    std::string line;
-    while(std::getline(data,line,']'))
+    stringstream  data(heatmap_input);
+    string line;
+    while(getline(data,line,']'))
     {
-        std::stringstream  lineStream(line);
-        std::string        cell;
+        stringstream  lineStream(line);
+        string        cell;
         
         col_num = 0;
 
-        while(std::getline(lineStream,cell,','))
+        while(getline(lineStream,cell,','))
         {
             // corner 0,0 is empty
             if (row_num == 0 && col_num == 0) {
@@ -203,7 +203,7 @@ int main()
             }
             // column label
             else if (row_num == 0){
-                col_names.push_back(std::string(cell));
+                col_names.push_back(string(cell));
             }
             // skip the first comma ("first column"), since it's just the comma separating rows
             else if (col_num == 0){
@@ -212,13 +212,13 @@ int main()
             }
             // row label
             else if (col_num == 1){
-                std::string _row_label = std::string(cell);
-                std::string row_label(_row_label.begin()+1, _row_label.end()); // to get rid of the extra '[' at the front
+                string _row_label = string(cell);
+                string row_label(_row_label.begin()+1, _row_label.end()); // to get rid of the extra '[' at the front
                 row_names.push_back(row_label);
             }
             // heatmap data cell
             else {
-                weight = std::stof(cell);
+                weight = stof(cell);
 
                 heatmap_data[row_num-1][col_num-2] = weight;
                 if (!weight) {
@@ -238,9 +238,9 @@ int main()
 
     /* =========================== Hierarchical clustering =========================== */
 
-    std::map<int, TreeNode> col_node_dict;
+    map<int, TreeNode> col_node_dict;
     int cur_col_node_id = -1;
-    std::map<int, TreeNode> row_node_dict;
+    map<int, TreeNode> row_node_dict;
     int cur_row_node_id = -1;
 
     if (col_dendro_flag) {
@@ -254,15 +254,15 @@ int main()
         Node* col_tree = treecluster(num_data_rows, num_data_cols, heatmap_data, mask, col_weight, 1, distance_function, linkage_function, 0);
         if (!col_tree)
         {
-            std::cerr << ("treecluster routine failed due to insufficient memory") << std::endl;
+            cerr << ("treecluster routine failed due to insufficient memory") << endl;
             free(col_weight);
             return 1;
         }
 
         // Print tree data
-        std::cerr << "Node     Item 1   Item 2    Distance\n" << std::endl;
+        cerr << "Node     Item 1   Item 2    Distance\n" << endl;
         for(int i=0; i<col_nnodes; i++){
-            std::cerr << -i-1 << "     " << col_tree[i].left << "     " << col_tree[i].right << "     " << col_tree[i].distance << std::endl;
+            cerr << -i-1 << "     " << col_tree[i].left << "     " << col_tree[i].right << "     " << col_tree[i].distance << endl;
         }
 
         // Sort column tree nodes
@@ -317,26 +317,26 @@ int main()
             // Add all descendents to Children
             new_tree_node.Children.push_back(col_node_dict[left_child_id]);
             new_tree_node.Children.push_back(col_node_dict[right_child_id]);
-            std::vector<TreeNode> left_child_children = col_node_dict[left_child_id].Children;
-            std::vector<TreeNode> right_child_children = col_node_dict[right_child_id].Children;
-            std::copy (left_child_children.begin(), left_child_children.end(), std::back_inserter(new_tree_node.Children));
-            std::copy (right_child_children.begin(), right_child_children.end(), std::back_inserter(new_tree_node.Children));
+            vector<TreeNode> left_child_children = col_node_dict[left_child_id].Children;
+            vector<TreeNode> right_child_children = col_node_dict[right_child_id].Children;
+            copy (left_child_children.begin(), left_child_children.end(), back_inserter(new_tree_node.Children));
+            copy (right_child_children.begin(), right_child_children.end(), back_inserter(new_tree_node.Children));
 
             // Add itself and all descendents to Indices
             new_tree_node.Indices.push_back(cur_col_node_id);
-            std::vector<int> left_child_indices = col_node_dict[left_child_id].Indices;
-            std::vector<int> right_child_indices = col_node_dict[right_child_id].Indices;
-            std::copy (left_child_indices.begin(), left_child_indices.end(), std::back_inserter(new_tree_node.Indices));
-            std::copy (right_child_indices.begin(), right_child_indices.end(), std::back_inserter(new_tree_node.Indices));
+            vector<int> left_child_indices = col_node_dict[left_child_id].Indices;
+            vector<int> right_child_indices = col_node_dict[right_child_id].Indices;
+            copy (left_child_indices.begin(), left_child_indices.end(), back_inserter(new_tree_node.Indices));
+            copy (right_child_indices.begin(), right_child_indices.end(), back_inserter(new_tree_node.Indices));
 
             /*
-            std::cerr << "New node: " << cur_col_node_id << std::endl;
-            std::cerr << "children" << std::endl;
+            cerr << "New node: " << cur_col_node_id << endl;
+            cerr << "children" << endl;
             for(int j=0; j < new_tree_node.Indices.size(); j++) {
-                std::cerr << new_tree_node.Indices[j]
-                << std::endl;
+                cerr << new_tree_node.Indices[j]
+                << endl;
             }
-            std::cerr << std::endl;
+            cerr << endl;
             */
 
 
@@ -361,7 +361,7 @@ int main()
 
         if (!row_tree)
         {
-            std::cerr << ("treecluster routine failed due to insufficient memory\n");
+            cerr << ("treecluster routine failed due to insufficient memory\n");
             free(row_weight);
             return 1;
         }
@@ -418,17 +418,17 @@ int main()
             // Add all descendents to Children
             new_tree_node.Children.push_back(row_node_dict[left_child_id]);
             new_tree_node.Children.push_back(row_node_dict[right_child_id]);
-            std::vector<TreeNode> left_child_children = row_node_dict[left_child_id].Children;
-            std::vector<TreeNode> right_child_children = row_node_dict[right_child_id].Children;
-            std::copy (left_child_children.begin(), left_child_children.end(), std::back_inserter(new_tree_node.Children));
-            std::copy (right_child_children.begin(), right_child_children.end(), std::back_inserter(new_tree_node.Children));
+            vector<TreeNode> left_child_children = row_node_dict[left_child_id].Children;
+            vector<TreeNode> right_child_children = row_node_dict[right_child_id].Children;
+            copy (left_child_children.begin(), left_child_children.end(), back_inserter(new_tree_node.Children));
+            copy (right_child_children.begin(), right_child_children.end(), back_inserter(new_tree_node.Children));
 
             // Add itself and all descendents to Indices
             new_tree_node.Indices.push_back(cur_row_node_id);
-            std::vector<int> left_child_indices = row_node_dict[left_child_id].Indices;
-            std::vector<int> right_child_indices = row_node_dict[right_child_id].Indices;
-            std::copy (left_child_indices.begin(), left_child_indices.end(), std::back_inserter(new_tree_node.Indices));
-            std::copy (right_child_indices.begin(), right_child_indices.end(), std::back_inserter(new_tree_node.Indices));
+            vector<int> left_child_indices = row_node_dict[left_child_id].Indices;
+            vector<int> right_child_indices = row_node_dict[right_child_id].Indices;
+            copy (left_child_indices.begin(), left_child_indices.end(), back_inserter(new_tree_node.Indices));
+            copy (right_child_indices.begin(), right_child_indices.end(), back_inserter(new_tree_node.Indices));
             
             row_node_dict[cur_row_node_id] = new_tree_node;
             cur_row_node_id--;
@@ -443,26 +443,26 @@ int main()
     mid2 = clock();
 
     /*
-    std::cerr << "AFTER" << std::endl;
+    cerr << "AFTER" << endl;
     for (int i = 0; i < num_data_rows; i++)
     {
         for (int j = 0; j < num_data_cols; j++)
         {
-            std::cerr << heatmap_data[i][j] << ' ';
+            cerr << heatmap_data[i][j] << ' ';
         }
-        std::cerr << std::endl;
+        cerr << endl;
     }
     */
 
     /* =========================== Output Generation (Stringifying) =========================== */
 
-    std::string output = "{heatmap:[";
+    string output = "{heatmap:[";
     for (int i = 0; i < num_data_rows; i++ )
     {
         output.append("[");
         for (int j=0; j< num_data_cols; j++) 
         {
-            output.append(std::to_string(heatmap_data[i][j]) + ",");
+            output.append(to_string(heatmap_data[i][j]) + ",");
         }
         output.pop_back();
         output.append("]");
@@ -483,8 +483,8 @@ int main()
     output.append("],\ncol_tree:");
     if (col_dendro_flag) {
         /// Stringify col tree and append to output
-        // output.append(std::string(col_node_dict[cur_col_node_id+1]))
-        std::cerr << "";
+        // output.append(string(col_node_dict[cur_col_node_id+1]))
+        cerr << "";
     }
     else {
         output.append("None");
@@ -493,8 +493,8 @@ int main()
     output.append(",\nrow_tree:");
     if (row_dendro_flag) {
         /// Stringify row tree and append to output
-        // output.append(std::string(row_node_dict[cur_row_node_id+1]))
-        std::cerr << "";
+        // output.append(string(row_node_dict[cur_row_node_id+1]))
+        cerr << "";
     }
     else {
         output.append("None");
@@ -502,7 +502,7 @@ int main()
 
     output.append("}");
 
-    std::cerr << std::endl << "OUTPUT" << std::endl << output << std::endl << std::endl ;
+    cerr << endl << "OUTPUT" << endl << output << endl << endl ;
 
     // De-allocating data arrays
     for(int i = 0; i < num_data_rows; ++i) {
@@ -516,18 +516,18 @@ int main()
     double time_output = double(end-mid2)/double(CLOCKS_PER_SEC);
     double time_taken_overall = double(end-start)/double(CLOCKS_PER_SEC);
 
-    std::cerr << "Input destringifying time : " << std::fixed 
-         << time_input << std::setprecision(5); 
-    std::cerr << " sec " << std::endl; 
-    std::cerr << "Clustering time : " << std::fixed 
-         << time_clustering << std::setprecision(5); 
-    std::cerr << " sec " << std::endl; 
-    std::cerr << "Output stringifying time : " << std::fixed 
-         << time_output << std::setprecision(5); 
-    std::cerr << " sec " << std::endl; 
-    std::cerr << "Overall time taken by program is : " << std::fixed 
-         << time_taken_overall << std::setprecision(5); 
-    std::cerr << " sec " << std::endl; 
+    cerr << "Input destringifying time : " << fixed 
+         << time_input << setprecision(5); 
+    cerr << " sec " << endl; 
+    cerr << "Clustering time : " << fixed 
+         << time_clustering << setprecision(5); 
+    cerr << " sec " << endl; 
+    cerr << "Output stringifying time : " << fixed 
+         << time_output << setprecision(5); 
+    cerr << " sec " << endl; 
+    cerr << "Overall time taken by program is : " << fixed 
+         << time_taken_overall << setprecision(5); 
+    cerr << " sec " << endl; 
 
     return 0;
 }
