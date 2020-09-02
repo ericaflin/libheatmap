@@ -442,6 +442,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    
     /*
     // Print tree data
     std::cerr << "Node     Item 1   Item 2    Distance\n" << std::endl;
@@ -449,6 +450,7 @@ int main(int argc, char* argv[])
         std::cerr << -i-1 << "     " << col_tree[i].left << "     " << col_tree[i].right << "     " << col_tree[i].distance << std::endl;
     }
     */
+    
 
     // Sort column tree nodes
     int *col_sorted_indices = new int[num_data_cols];
@@ -503,6 +505,12 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Print tree data
+    std::cerr << "Node     Item 1   Item 2    Distance\n" << std::endl;
+    for(unsigned i=0; i<row_nnodes; i++){
+        std::cerr << i << "     " << row_tree[i].left << "     " << row_tree[i].right << "     " << row_tree[i].distance << std::endl;
+    }
+
     // Sort row tree nodes
     int *row_sorted_indices = new int[num_data_rows];
 
@@ -518,12 +526,17 @@ int main(int argc, char* argv[])
         }
     }
 
+
     // Reorder row labels
     reorder_strings(row_names, row_sorted_indices, num_data_rows);
     // Reorder heatmap rows
     reorder_matrix(heatmap_data, row_sorted_indices, num_data_rows, num_data_cols, 'r');
     // Reorder mask
     reorder_matrix(mask, row_sorted_indices, num_data_rows, num_data_cols, 'r');
+
+    for (unsigned i=0; i<num_data_rows; i++) {
+        std::cerr << i << row_names[i] << std::endl;
+    }
 
     // Free memory used during hierarchical clustering
     free(row_tree);

@@ -17,6 +17,23 @@ class TreeNode {
         float Height;
         vector<int> Indices;
         vector<TreeNode> Children;
+
+        string stringify(TreeNode tree) {
+            string children = ",";
+            
+            for (TreeNode &t : tree.Children) {
+                string current_string = stringify(t);
+                children += current_string;
+                children += ",";
+            }
+            children.pop_back();
+
+            std::ostringstream  stream;
+            stream << "TreeNode(" << tree.NodeId << tree.Height << tree.indices << children << ")";
+            std::string output = stream.str();
+
+            return output;
+        }
 };
 
 class Leaf : public TreeNode {
@@ -481,6 +498,8 @@ int main()
     output.pop_back();
 
     output.append("],\ncol_tree:");
+
+    /*
     if (col_dendro_flag) {
         /// Stringify col tree and append to output
         // output.append(string(col_node_dict[cur_col_node_id+1]))
@@ -489,8 +508,11 @@ int main()
     else {
         output.append("None");
     }
+    */
 
     output.append(",\nrow_tree:");
+
+    /*
     if (row_dendro_flag) {
         /// Stringify row tree and append to output
         // output.append(string(row_node_dict[cur_row_node_id+1]))
@@ -499,6 +521,7 @@ int main()
     else {
         output.append("None");
     }
+    */
 
     output.append("}");
 
