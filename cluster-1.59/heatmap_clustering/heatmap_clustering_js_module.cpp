@@ -20,7 +20,8 @@ class TreeNode {
 
         string stringify(TreeNode tree) {
             string children = ",";
-            
+
+            // need to account for cases where leaves are missing
             for (TreeNode &t : tree.Children) {
                 string current_string = stringify(t);
                 children += current_string;
@@ -28,9 +29,15 @@ class TreeNode {
             }
             children.pop_back();
 
-            std::ostringstream  stream;
-            stream << "TreeNode(" << tree.NodeId << tree.Height << tree.indices << children << ")";
-            std::string output = stream.str();
+            ostringstream  stream;
+            stream << "TreeNode(" << tree.NodeId << tree.Height;
+
+            for (int i=0; i<Indices.size(); i++) {
+                stream << Indices.at(i) << ",";
+            }
+
+            string output = stream.str();
+            output.pop_back();
 
             return output;
         }
@@ -498,6 +505,13 @@ int main()
     output.pop_back();
 
     output.append("],\ncol_tree:");
+
+    for (auto const& pair: row_node_dict) {
+        cerr << pair.first << typeid(pair.second).name() << endl;
+    }
+
+    cerr << num_data_rows << endl;
+
 
     /*
     if (col_dendro_flag) {
