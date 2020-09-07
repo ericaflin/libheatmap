@@ -30,11 +30,13 @@ class TreeNode {
             children.pop_back();
 
             ostringstream  stream;
-            stream << "TreeNode(" << tree.NodeId << tree.Height;
+            stream << "TreeNode(" << tree.NodeId << "," << tree.Height << ",";
 
             for (int i=0; i<Indices.size(); i++) {
                 stream << Indices.at(i) << ",";
             }
+
+            stream << children << ",";
 
             string output = stream.str();
             output.pop_back();
@@ -510,7 +512,6 @@ int main()
         cerr << pair.first << typeid(pair.second).name() << endl;
     }
 
-    cerr << num_data_rows << endl;
 
 
     /*
