@@ -32,10 +32,17 @@ class TreeNode {
             ostringstream  stream;
             stream << "TreeNode(" << tree.NodeId << "," << tree.Height << ",";
 
-            for (int i=0; i<Indices.size(); i++) {
-                stream << Indices.at(i) << ",";
-            }
+            stream << "[";
 
+            for (int i=0; i<Indices.size(); i++) {
+                if (i == Indices.size()-1) {
+                    stream << Indices.at(i);
+                } else {
+                    stream << Indices.at(i) << ",";
+                }
+            }
+            
+            stream << "]";
             stream << children << ",";
 
             string output = stream.str();
@@ -377,8 +384,8 @@ int main()
 
     }
 
+    int row_nnodes = num_data_rows-1;
     if (row_dendro_flag) {
-        int row_nnodes = num_data_rows-1;
 
         double *row_weight = new double[num_data_rows];
         for(int i = 0; i < num_data_rows; ++i) {
@@ -513,8 +520,6 @@ int main()
         cerr << pair.first << typeid(pair.second).name() << endl;
     }
 
-    output.append(col_node_dict[col_nnodes-1].stringify(col_node_dict[col_nnodes-1]));
-
 
 
     /*
@@ -540,6 +545,8 @@ int main()
         output.append("None");
     }
     */
+
+   output.append(row_node_dict[-(row_nnodes-1)].stringify(row_node_dict[-(row_nnodes-1)]));
 
     output.append("}");
 
