@@ -19,7 +19,7 @@ class TreeNode {
         vector<TreeNode> Children;
 
         string stringify(TreeNode tree) {
-            string children = ",";
+            string children = "";
 
             // need to account for cases where leaves are missing
             for (TreeNode &t : tree.Children) {
@@ -27,8 +27,9 @@ class TreeNode {
                 children += current_string;
                 children += ",";
             }
-            children.pop_back();
-
+            if (children != ""){
+                children.pop_back();
+            }
             ostringstream  stream;
             stream << "TreeNode(" << tree.NodeId << "," << tree.Height << ",";
 
@@ -42,11 +43,13 @@ class TreeNode {
                 }
             }
             
-            stream << "]";
-            stream << children << ",";
+            stream << "],";
+            stream << "[" << children << ",";
 
             string output = stream.str();
             output.pop_back();
+            output.append("]");
+            output.append(")");
 
             return output;
         }
@@ -546,7 +549,7 @@ int main()
     }
     */
 
-   output.append(row_node_dict[-(row_nnodes-1)].stringify(row_node_dict[-(row_nnodes-1)]));
+    output.append(row_node_dict[-row_nnodes].stringify(row_node_dict[-row_nnodes]));
 
     output.append("}");
 
