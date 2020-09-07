@@ -35,11 +35,11 @@ class TreeNode {
 
             stream << "[";
 
-            for (int i=0; i<Indices.size(); i++) {
-                if (i == Indices.size()-1) {
-                    stream << Indices.at(i);
+            for (int i=0; i<tree.Indices.size(); i++) {
+                if (i == tree.Indices.size()-1) {
+                    stream << tree.Indices.at(i);
                 } else {
-                    stream << Indices.at(i) << ",";
+                    stream << tree.Indices.at(i) << ",";
                 }
             }
             
