@@ -19,8 +19,8 @@ class TreeNode {
         vector<TreeNode> Children;
 
         string stringify(TreeNode tree) {
-            string children = "";
 
+            string children = "";
             // need to account for cases where leaves are missing
             for (TreeNode &t : tree.Children) {
                 string current_string = stringify(t);
@@ -30,12 +30,12 @@ class TreeNode {
             if (children != ""){
                 children.pop_back();
             }
+
             ostringstream  stream;
             stream << "TreeNode(" << tree.NodeId << "," << tree.Height << ",";
-
             stream << "[";
 
-            for (int i=0; i<tree.Indices.size(); i++) {
+            for (unsigned i=0; i<tree.Indices.size(); i++) {
                 if (i == tree.Indices.size()-1) {
                     stream << tree.Indices.at(i);
                 } else {
@@ -523,33 +523,24 @@ int main()
         cerr << pair.first << typeid(pair.second).name() << endl;
     }
 
-
-
-    /*
     if (col_dendro_flag) {
-        /// Stringify col tree and append to output
-        // output.append(string(col_node_dict[cur_col_node_id+1]))
+        output.append(row_node_dict[-col_nnodes].stringify(row_node_dict[-col_nnodes]));
         cerr << "";
     }
     else {
         output.append("None");
     }
-    */
 
     output.append(",\nrow_tree:");
 
-    /*
     if (row_dendro_flag) {
-        /// Stringify row tree and append to output
-        // output.append(string(row_node_dict[cur_row_node_id+1]))
+        output.append(row_node_dict[-row_nnodes].stringify(row_node_dict[-row_nnodes]));
+
         cerr << "";
     }
     else {
         output.append("None");
     }
-    */
-
-    output.append(row_node_dict[-row_nnodes].stringify(row_node_dict[-row_nnodes]));
 
     output.append("}");
 
