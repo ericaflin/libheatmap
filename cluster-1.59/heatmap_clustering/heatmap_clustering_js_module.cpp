@@ -122,7 +122,7 @@ int main()
     clock_t start, mid, mid2, end;
     start = clock();
 
-    string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:r}";
+    string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:c}";
 
     /* =========================== Input Parsing (Destringifying) =========================== */
 
@@ -524,7 +524,7 @@ int main()
     }
 
     if (col_dendro_flag) {
-        output.append(row_node_dict[-col_nnodes].stringify(row_node_dict[-col_nnodes]));
+        output.append(col_node_dict[-col_nnodes].stringify(col_node_dict[-col_nnodes]));
         cerr << "";
     }
     else {
