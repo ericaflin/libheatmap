@@ -18,12 +18,12 @@ class TreeNode {
         vector<int> Indices;
         vector<TreeNode> Children;
 
-        string stringify(TreeNode tree) {
+        string stringify() {
 
             string children = "";
             // need to account for cases where leaves are missing
-            for (TreeNode &t : tree.Children) {
-                string current_string = stringify(t);
+            for (TreeNode &t : Children) {
+                string current_string = t.stringify();
                 children += current_string;
                 children += ",";
             }
@@ -32,14 +32,14 @@ class TreeNode {
             }
 
             ostringstream  stream;
-            stream << "TreeNode(" << tree.NodeId << "," << tree.Height << ",";
+            stream << "TreeNode(" << NodeId << "," << Height << ",";
             stream << "[";
 
-            for (unsigned i=0; i<tree.Indices.size(); i++) {
-                if (i == tree.Indices.size()-1) {
-                    stream << tree.Indices.at(i);
+            for (unsigned i=0; i<Indices.size(); i++) {
+                if (i == Indices.size()-1) {
+                    stream << Indices.at(i);
                 } else {
-                    stream << tree.Indices.at(i) << ",";
+                    stream << Indices.at(i) << ",";
                 }
             }
             
@@ -122,7 +122,7 @@ int main()
     clock_t start, mid, mid2, end;
     start = clock();
 
-    string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:c}";
+    string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:b}";
 
     /* =========================== Input Parsing (Destringifying) =========================== */
 
@@ -524,7 +524,7 @@ int main()
     }
 
     if (col_dendro_flag) {
-        output.append(col_node_dict[-col_nnodes].stringify(col_node_dict[-col_nnodes]));
+        output.append(col_node_dict[-col_nnodes].stringify());
         cerr << "";
     }
     else {
@@ -534,7 +534,7 @@ int main()
     output.append(",\nrow_tree:");
 
     if (row_dendro_flag) {
-        output.append(row_node_dict[-row_nnodes].stringify(row_node_dict[-row_nnodes]));
+        output.append(row_node_dict[-row_nnodes].stringify());
 
         cerr << "";
     }
