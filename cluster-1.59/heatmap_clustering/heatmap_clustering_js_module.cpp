@@ -269,8 +269,9 @@ int main()
     map<int, TreeNode> row_node_dict;
     int cur_row_node_id = -1;
 
+    int col_nnodes = num_data_cols-1;
     if (col_dendro_flag) {
-        int col_nnodes = num_data_cols-1;
+        //int col_nnodes = num_data_cols-1;
 
         // Get dendrogram tree for column data
         double *col_weight = new double[num_data_cols];
@@ -511,6 +512,8 @@ int main()
     for (auto const& pair: row_node_dict) {
         cerr << pair.first << typeid(pair.second).name() << endl;
     }
+
+    output.append(col_node_dict[col_nnodes-1].stringify(col_node_dict[col_nnodes-1]));
 
 
 
