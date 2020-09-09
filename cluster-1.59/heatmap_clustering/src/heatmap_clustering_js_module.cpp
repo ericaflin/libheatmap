@@ -312,10 +312,13 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
         }
 
         // Print tree data
+
+        /*
         cerr << "Node     Item 1   Item 2    Distance\n" << endl;
         for(int i=0; i<col_nnodes; i++){
             cerr << -i-1 << "     " << col_tree[i].left << "     " << col_tree[i].right << "     " << col_tree[i].distance << endl;
         }
+        */;
 
         // Sort column tree nodes
         int *col_sorted_indices = new int[num_data_cols];
