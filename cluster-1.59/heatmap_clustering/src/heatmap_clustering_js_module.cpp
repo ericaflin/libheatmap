@@ -6,9 +6,12 @@
 #include <map>
 #include <vector>
 #include <string.h>
+#include <node_api.h>
+
 extern "C" {
     #include "cluster.h"
 }
+
 using namespace std;
 
 class TreeNode {
@@ -116,13 +119,32 @@ void reorder_matrix(T** &matrix, int* index, int num_data_rows, int num_data_col
 
 } 
 
-int main()
-{  
-    
+napi_value ClusterC(napi_env env, napi_callback_info info) {
+    napi_status status;
+    size_t argc = 1;
+    size_t buf_size = 1048576; ///// might need to increase
+    size_t input_bytes = 0;
+    char input[buf_size];
+    napi_value argv[1];
+    status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (status != napi_ok) {
+        napi_throw_error(env, NULL, "Failed to parse arguments");
+    }
+
+    status = napi_get_value_string_utf8(env, argv[0], input, buf_size, &input_bytes);
+
+    if (input_bytes >= buf_size-1) {
+        napi_throw_error(env, NULL, "Input too long");
+    }
+
+    if (status != napi_ok) {
+        napi_throw_error(env, NULL, "Invalid input");
+    }
+
+
     clock_t start, mid, mid2, end;
     start = clock();
-
-    string input = "{heatmap_input:[[,col1,col2],[row1,1,2],[row2,3,4]],\ndistance_function:e,\nlinkage_function:a,\naxes:b}";
 
     /* =========================== Input Parsing (Destringifying) =========================== */
 
@@ -166,24 +188,18 @@ int main()
     if (possible_distance_functions.find(distance_function) == string::npos) {
         cerr << endl << "Distance function given is not an option." << endl;
         cerr << "See readme for more info" << endl;
-
-        return 1;
     }
 
     string possible_linkage_functions = "smac";
     if (possible_linkage_functions.find(linkage_function) == string::npos) {
         cerr << endl << "Linkage function given is not an option." << endl;
         cerr << "See readme for more info" << endl;
-
-        return 1;
     }
 
     string possible_dendro_axes = "rcb";
     if (possible_dendro_axes.find(axes) == string::npos) {
         cerr << endl << "Axes given is not an option." << endl;
         cerr << "Should be 'r', 'c', or 'b' (row / col / both)" << endl;
-
-        return 1;
     }
 
     bool col_dendro_flag = false;
@@ -293,7 +309,6 @@ int main()
         {
             cerr << ("treecluster routine failed due to insufficient memory") << endl;
             free(col_weight);
-            return 1;
         }
 
         // Print tree data
@@ -400,7 +415,6 @@ int main()
         {
             cerr << ("treecluster routine failed due to insufficient memory\n");
             free(row_weight);
-            return 1;
         }
 
         // Sort row tree nodes
@@ -519,13 +533,8 @@ int main()
 
     output.append("],\ncol_tree:");
 
-    for (auto const& pair: row_node_dict) {
-        cerr << pair.first << typeid(pair.second).name() << endl;
-    }
-
     if (col_dendro_flag) {
         output.append(col_node_dict[-col_nnodes].stringify());
-        cerr << "";
     }
     else {
         output.append("None");
@@ -535,8 +544,6 @@ int main()
 
     if (row_dendro_flag) {
         output.append(row_node_dict[-row_nnodes].stringify());
-
-        cerr << "";
     }
     else {
         output.append("None");
@@ -571,5 +578,33 @@ int main()
          << time_taken_overall << setprecision(5); 
     cerr << " sec " << endl; 
 
-    return 0;
+    napi_value return_napi_string;
+
+    status = napi_create_string_utf8(env, output.c_str(), output.length(), &return_napi_string);
+
+    if (status != napi_ok) {
+        napi_throw_error(env, NULL, "Unable to create return value");
+    }
+
+    return return_napi_string;
 }
+
+
+napi_value Init(napi_env env, napi_value exports) {
+  napi_status status;
+  napi_value fn;
+
+  status = napi_create_function(env, NULL, 0, ClusterC, NULL, &fn);
+  if (status != napi_ok) {
+    napi_throw_error(env, NULL, "Unable to wrap native function");
+  }
+
+  status = napi_set_named_property(env, exports, "ccluster", fn);
+  if (status != napi_ok) {
+    napi_throw_error(env, NULL, "Unable to populate exports");
+  }
+
+  return exports;
+}
+
+NAPI_MODULE(NODE_GYP_MODULE_NAME, Init)
