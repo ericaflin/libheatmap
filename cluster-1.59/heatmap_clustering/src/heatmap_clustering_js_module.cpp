@@ -335,7 +335,6 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
             }
         }
 
-
         // Reorder column labels
         reorder_strings(col_names, col_sorted_indices, num_data_cols);
         // Reorder heatmap columns
@@ -345,7 +344,12 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
 
         // Creating TreeNode dict
 
-        //// TODO: May need to remap leaf indices due to sorting heatmap data
+        // Remapping leaf indices due to sorting heatmap data: original index --> new index
+        // We need this because the clustering algorithm mapped the tree according to the original col indices
+        map<int,int> new_col_leaf_id;
+        for (int i = 0; i < num_data_cols; i++) {
+            new_col_leaf_id[col_sorted_indices[i]] = i;
+        }
 
         // Add leaves
         for(int i = 0; i < num_data_cols; ++i) {
@@ -368,6 +372,13 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
             
             int left_child_id = col_tree[i].left;
             int right_child_id = col_tree[i].right;
+
+            if (left_child_id >= 0) {
+                left_child_id = new_col_leaf_id[left_child_id];
+            }
+            if (right_child_id >= 0) {
+                right_child_id = new_col_leaf_id[right_child_id];
+            }
 
             // Add all descendents to Children
             new_tree_node.Children.push_back(col_node_dict[left_child_id]);
@@ -444,7 +455,12 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
 
         // Creating TreeNode dict
 
-        //// TODO: May need to remap leaf indices due to sorting heatmap data
+        // Remapping leaf indices due to sorting heatmap data: original index --> new index
+        // We need this because the clustering algorithm mapped the tree according to the original col indices
+        map<int,int> new_row_leaf_id;
+        for (int i = 0; i < num_data_rows; i++) {
+            new_row_leaf_id[row_sorted_indices[i]] = i;
+        }
 
         // Add leaves
         for(int i = 0; i < num_data_rows; ++i) {
@@ -466,8 +482,14 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
             new_tree_node.Height = cur_height;
             
             int left_child_id = row_tree[i].left;
-            
             int right_child_id = row_tree[i].right;
+
+            if (left_child_id >= 0) {
+                left_child_id = new_row_leaf_id[left_child_id];
+            }
+            if (right_child_id >= 0) {
+                right_child_id = new_row_leaf_id[right_child_id];
+            }
 
             // Add all descendents to Children
             new_tree_node.Children.push_back(row_node_dict[left_child_id]);
