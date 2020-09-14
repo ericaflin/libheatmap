@@ -21,6 +21,66 @@ class TreeNode {
         vector<int> Indices;
         vector<TreeNode> Children;
 
+        napi_status napify(napi_env env, napi_value* napi_tree_result) {
+
+            napi_status status;
+
+            cerr << "Node " << NodeId << endl;
+
+            // Creating napi keys
+            string current_napi_key_name;
+            current_napi_key_name = "nodeid";
+            napi_value napi_nodeid_key;
+            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_nodeid_key);
+            current_napi_key_name = "height";
+            napi_value napi_height_key;
+            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_height_key);
+            current_napi_key_name = "indexes";
+            napi_value napi_indices_key;
+            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_indices_key);
+            current_napi_key_name = "children";
+            napi_value napi_children_key;
+            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_children_key);
+
+            // Creating napi values
+            napi_value napi_nodeid_val;
+            status = napi_create_int64(env, NodeId, &napi_nodeid_val);
+            napi_value napi_height_val;
+            status = napi_create_int64(env, Height, &napi_height_val);
+
+            napi_value napi_indices_val;
+            status = napi_create_array(env, &napi_indices_val);
+            for (unsigned i = 0; i < Indices.size(); i++) {
+                napi_value cur_item;
+                status = napi_create_int64(env, Indices.at(i), &cur_item);
+                status = napi_set_element(env, napi_indices_val, i, cur_item);
+            }
+
+            napi_value napi_children_val;
+            status = napi_create_array(env, &napi_children_val);
+            cerr << "Children size: " << Children.size() << endl;
+            for (unsigned i = 0; i < Children.size(); i++) {
+                cerr << "Child " << i << ": " << Children.at(i).NodeId << endl;
+                napi_value cur_child;
+                status = Children.at(i).napify(env, &cur_child);
+                status = napi_set_element(env, napi_children_val, i, cur_child);
+            }
+
+            // Setting keys and values for return
+            status = napi_set_property(env, *napi_tree_result, napi_nodeid_key, napi_nodeid_val);
+            status = napi_set_property(env, *napi_tree_result, napi_height_key, napi_height_val);
+            status = napi_set_property(env, *napi_tree_result, napi_indices_key, napi_indices_val);
+            status = napi_set_property(env, *napi_tree_result, napi_children_key, napi_children_val);
+
+            napi_value nodeid_output_napi;
+            int64_t nodeid_output_int;
+            napi_get_property(env, *napi_tree_result, napi_nodeid_key, &nodeid_output_napi);
+            napi_get_value_int64(env, nodeid_output_napi, &nodeid_output_int);   
+            // cerr << nodeid_output_int << endl;         
+
+            return status;
+        }
+
         string stringify() {
 
             string children = "";
@@ -177,7 +237,7 @@ void cluster_axis(int num_data_rows, int num_data_cols, char distance_func, char
         int cur_node_id = -1;
 
         // Remapping leaf indices due to sorting heatmap data: original index --> new index
-        // We need this because the clustering algorithm mapped the tree according to the original col indices
+        // We need this because the clustering algorithm mapped the tree according to the original col/row indices
         map<int,int> new_leaf_id;
         for (int i = 0; i < num_data_leaves; i++) {
             new_leaf_id[sorted_indices[i]] = i;
@@ -441,8 +501,9 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
     }
     */
 
-    /* =========================== Output Generation (Stringifying) =========================== */
+    /* =========================== Output Generation (Stringifying) =========================== */                        
 
+/*
     string output = "{heatmap:[";
     for (int i = 0; i < num_data_rows; i++ )
     {
@@ -488,6 +549,76 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
     output.append("}");
 
     cerr << endl << "OUTPUT" << endl << output << endl << endl ;
+*/
+
+    // ----- Wrapping output object into napi object for return ----
+
+    napi_value return_napi_object;
+    status = napi_create_object(env, &return_napi_object);
+    if (status != napi_ok) {
+        napi_throw_error(env, NULL, "Failed to create napi object");
+    }
+
+    // Creating napi keys and values
+    string current_napi_key_name;
+    current_napi_key_name = "matrix";
+    napi_value napi_matrix_key;
+    status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_matrix_key);
+    current_napi_key_name = "rowLabels";
+    napi_value napi_rowlabels_key;
+    status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_rowlabels_key);
+    current_napi_key_name = "colLabels";
+    napi_value napi_collabels_key;
+    status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_collabels_key);
+    current_napi_key_name = "rowTree";
+    napi_value napi_rowtree_key;
+    status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_rowtree_key);
+    current_napi_key_name = "colTree";
+    napi_value napi_coltree_key;
+    status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_coltree_key);
+
+    napi_value napi_matrix_val;
+    status = napi_create_array(env, &napi_matrix_val);
+    for (int i = 0; i < num_data_rows; i++) {
+        napi_value napi_cur_matrix_row;
+        status = napi_create_array(env, &napi_cur_matrix_row);
+
+        for (int j = 0; j < num_data_cols; j++) {
+            napi_value napi_cell_value;
+            status = napi_create_double(env, heatmap_data[i][j], &napi_cell_value);
+            status = napi_set_element(env, napi_cur_matrix_row, j, napi_cell_value);
+        }
+        status = napi_set_element(env, napi_matrix_val, i, napi_cur_matrix_row);
+    }
+
+    napi_value napi_rowlabels_val;
+    status = napi_create_array(env, &napi_rowlabels_val);
+    for (int i = 0; i < num_data_rows; i++) {
+        napi_value cur_row_name;
+        status = napi_create_string_utf8(env, row_names[i].c_str(), row_names[i].length(), &cur_row_name);
+        status = napi_set_element(env, napi_rowlabels_val, i, cur_row_name);
+    }
+
+    napi_value napi_collabels_val;
+    status = napi_create_array(env, &napi_collabels_val);
+    for (int i = 0; i < num_data_cols; i++) {
+        napi_value cur_col_name;
+        status = napi_create_string_utf8(env, col_names[i].c_str(), col_names[i].length(), &cur_col_name);
+        status = napi_set_element(env, napi_collabels_val, i, cur_col_name);
+    }
+
+    napi_value napi_rowtree_val;
+    status = row_node_dict[-(num_data_rows-1)].napify(env, &napi_rowtree_val);
+
+    napi_value napi_coltree_val;
+    status = col_node_dict[-(num_data_cols-1)].napify(env, &napi_coltree_val);
+
+    // Setting keys and values for return
+    status = napi_set_property(env, return_napi_object, napi_matrix_key, napi_matrix_val);
+    status = napi_set_property(env, return_napi_object, napi_rowlabels_key, napi_rowlabels_val);
+    status = napi_set_property(env, return_napi_object, napi_collabels_key, napi_collabels_val);
+    status = napi_set_property(env, return_napi_object, napi_rowtree_key, napi_rowtree_val);
+    status = napi_set_property(env, return_napi_object, napi_coltree_key, napi_coltree_val);
 
     // De-allocating data arrays
     for(int i = 0; i < num_data_rows; ++i) {
@@ -514,15 +645,16 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
          << time_taken_overall << setprecision(5); 
     cerr << " sec " << endl; 
 
+/*
     napi_value return_napi_string;
-
     status = napi_create_string_utf8(env, output.c_str(), output.length(), &return_napi_string);
+*/
 
     if (status != napi_ok) {
         napi_throw_error(env, NULL, "Unable to create return value");
     }
 
-    return return_napi_string;
+    return return_napi_object;
 }
 
 
