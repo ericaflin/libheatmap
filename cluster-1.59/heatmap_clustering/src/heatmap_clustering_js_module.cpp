@@ -17,7 +17,7 @@ using namespace std;
 class TreeNode {
     public:
         int NodeId;
-        float Height;
+        int Height;
         vector<int> Indices;
         vector<TreeNode> Children;
 
@@ -25,13 +25,16 @@ class TreeNode {
 
             napi_status status;
 
-            cerr << "Node " << NodeId << endl;
-
             // Creating napi keys
+            status = napi_create_object(env, napi_tree_result);
+            if (status != napi_ok) {
+                napi_throw_error(env, NULL, "Failed to create napi object");
+            }
+
             string current_napi_key_name;
             current_napi_key_name = "nodeid";
             napi_value napi_nodeid_key;
-            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_nodeid_key);
+            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_nodeid_key);       
             current_napi_key_name = "height";
             napi_value napi_height_key;
             status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_height_key);
@@ -45,9 +48,9 @@ class TreeNode {
             // Creating napi values
             napi_value napi_nodeid_val;
             status = napi_create_int64(env, NodeId, &napi_nodeid_val);
+            
             napi_value napi_height_val;
             status = napi_create_int64(env, Height, &napi_height_val);
-
             napi_value napi_indices_val;
             status = napi_create_array(env, &napi_indices_val);
             for (unsigned i = 0; i < Indices.size(); i++) {
@@ -55,28 +58,19 @@ class TreeNode {
                 status = napi_create_int64(env, Indices.at(i), &cur_item);
                 status = napi_set_element(env, napi_indices_val, i, cur_item);
             }
-
             napi_value napi_children_val;
             status = napi_create_array(env, &napi_children_val);
-            cerr << "Children size: " << Children.size() << endl;
             for (unsigned i = 0; i < Children.size(); i++) {
-                cerr << "Child " << i << ": " << Children.at(i).NodeId << endl;
                 napi_value cur_child;
                 status = Children.at(i).napify(env, &cur_child);
                 status = napi_set_element(env, napi_children_val, i, cur_child);
             }
 
             // Setting keys and values for return
-            status = napi_set_property(env, *napi_tree_result, napi_nodeid_key, napi_nodeid_val);
+            status = napi_set_property(env, *napi_tree_result, napi_nodeid_key, napi_nodeid_val);         
             status = napi_set_property(env, *napi_tree_result, napi_height_key, napi_height_val);
-            status = napi_set_property(env, *napi_tree_result, napi_indices_key, napi_indices_val);
+            status = napi_set_property(env, *napi_tree_result, napi_indices_key, napi_indices_val);            
             status = napi_set_property(env, *napi_tree_result, napi_children_key, napi_children_val);
-
-            napi_value nodeid_output_napi;
-            int64_t nodeid_output_int;
-            napi_get_property(env, *napi_tree_result, napi_nodeid_key, &nodeid_output_napi);
-            napi_get_value_int64(env, nodeid_output_napi, &nodeid_output_int);   
-            // cerr << nodeid_output_int << endl;         
 
             return status;
         }
@@ -608,10 +602,20 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
     }
 
     napi_value napi_rowtree_val;
-    status = row_node_dict[-(num_data_rows-1)].napify(env, &napi_rowtree_val);
+    if (row_dendro_flag) {
+        status = row_node_dict[-(num_data_rows-1)].napify(env, &napi_rowtree_val);
+    }
+    else {
+        status = napi_get_null(env, &napi_rowtree_val);
+    }
 
     napi_value napi_coltree_val;
-    status = col_node_dict[-(num_data_cols-1)].napify(env, &napi_coltree_val);
+    if (col_dendro_flag) {
+        status = col_node_dict[-(num_data_cols-1)].napify(env, &napi_coltree_val);
+    }
+    else {
+        status = napi_get_null(env, &napi_coltree_val);
+    }
 
     // Setting keys and values for return
     status = napi_set_property(env, return_napi_object, napi_matrix_key, napi_matrix_val);
