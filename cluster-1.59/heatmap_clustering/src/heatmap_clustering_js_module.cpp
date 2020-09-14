@@ -512,57 +512,7 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
     }
     */
 
-    /* =========================== Output Generation (Stringifying) =========================== */                        
-
-/*
-    string output = "{heatmap:[";
-    for (int i = 0; i < num_data_rows; i++ )
-    {
-        output.append("[");
-        for (int j=0; j< num_data_cols; j++) 
-        {
-            output.append(to_string(heatmap_data[i][j]) + ",");
-        }
-        output.pop_back();
-        output.append("]");
-    }
-
-    output.append("],\ncol_labels:[");
-    for (int i = 0; i < num_data_cols; i++) {
-        output.append(col_names.at(i) + ",");
-    }
-    output.pop_back();
-
-    output.append("],\nrow_labels:[");
-    for (int i = 0; i < num_data_rows; i++) {
-        output.append(row_names.at(i) + ",");
-    }
-    output.pop_back();
-
-    output.append("],\ncol_tree:");
-
-    if (col_dendro_flag) {
-        output.append(col_node_dict[-(num_data_cols-1)].stringify());
-    }
-    else {
-        output.append("None");
-    }
-
-    output.append(",\nrow_tree:");
-
-    if (row_dendro_flag) {
-        output.append(row_node_dict[-(num_data_rows-1)].stringify());
-    }
-    else {
-        output.append("None");
-    }
-
-    output.append("}");
-
-    cerr << endl << "OUTPUT" << endl << output << endl << endl ;
-*/
-
-    // ----- Wrapping output object into napi object for return ----
+    /* =========================== Output Generation (Wrapping Napi Object) =========================== */                        
 
     napi_value return_napi_object;
     status = napi_create_object(env, &return_napi_object);
@@ -666,18 +616,12 @@ napi_value ClusterC(napi_env env, napi_callback_info info) {
          << time_taken_overall << setprecision(5); 
     cerr << " sec " << endl; 
 
-/*
-    napi_value return_napi_string;
-    status = napi_create_string_utf8(env, output.c_str(), output.length(), &return_napi_string);
-*/
-
     if (status != napi_ok) {
         napi_throw_error(env, NULL, "Unable to create return value");
     }
 
     return return_napi_object;
 }
-
 
 napi_value Init(napi_env env, napi_value exports) {
   napi_status status;
