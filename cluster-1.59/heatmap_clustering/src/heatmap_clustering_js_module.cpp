@@ -19,22 +19,26 @@ class TreeNode {
         int NodeId;
         int Height;
         vector<int> Indices;
-        vector<TreeNode> Children;
+        vector<TreeNode*> Children;
 
-        napi_status napify(napi_env env, napi_value* napi_tree_result) {
+        string Label;
+        vector<double> Values;
+
+        virtual ~TreeNode() {}
+        virtual napi_status napify(napi_env env, napi_value* napi_tree_result) {
 
             napi_status status;
 
-            // Creating napi keys
             status = napi_create_object(env, napi_tree_result);
             if (status != napi_ok) {
                 napi_throw_error(env, NULL, "Failed to create napi object");
             }
 
+            // Creating napi keys
             string current_napi_key_name;
-            current_napi_key_name = "nodeid";
-            napi_value napi_nodeid_key;
-            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_nodeid_key);       
+            current_napi_key_name = "name";
+            napi_value napi_name_key;
+            status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_name_key);       
             current_napi_key_name = "height";
             napi_value napi_height_key;
             status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_height_key);
@@ -46,8 +50,8 @@ class TreeNode {
             status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_children_key);
 
             // Creating napi values
-            napi_value napi_nodeid_val;
-            status = napi_create_int64(env, NodeId, &napi_nodeid_val);
+            napi_value napi_name_val;
+            status = napi_create_string_utf8(env, Label.c_str(), Label.length(), &napi_name_val);
             
             napi_value napi_height_val;
             status = napi_create_int64(env, Height, &napi_height_val);
@@ -62,16 +66,29 @@ class TreeNode {
             status = napi_create_array(env, &napi_children_val);
             for (unsigned i = 0; i < Children.size(); i++) {
                 napi_value cur_child;
-                status = Children.at(i).napify(env, &cur_child);
+                status = Children.at(i)->napify(env, &cur_child);       
                 status = napi_set_element(env, napi_children_val, i, cur_child);
             }
 
             // Setting keys and values for return
-            status = napi_set_property(env, *napi_tree_result, napi_nodeid_key, napi_nodeid_val);         
+            status = napi_set_property(env, *napi_tree_result, napi_name_key, napi_name_val);         
             status = napi_set_property(env, *napi_tree_result, napi_height_key, napi_height_val);
             status = napi_set_property(env, *napi_tree_result, napi_indices_key, napi_indices_val);            
             status = napi_set_property(env, *napi_tree_result, napi_children_key, napi_children_val);
 
+            if (NodeId >= 0) {
+                current_napi_key_name = "values";
+                napi_value napi_values_key;
+                status = napi_create_string_utf8(env, current_napi_key_name.c_str(), current_napi_key_name.length(), &napi_values_key);
+                napi_value napi_values_val;
+                status = napi_create_array(env, &napi_values_val);
+                for (unsigned i = 0; i < Children.size(); i++) {
+                    napi_value cur_item;
+                    status = napi_create_double(env, Values.at(i), &cur_item);
+                    status = napi_set_element(env, napi_values_val, i, cur_item);
+                    status = napi_set_property(env, *napi_tree_result, napi_values_key, napi_values_val);
+                }
+            }
             return status;
         }
 
@@ -79,8 +96,8 @@ class TreeNode {
 
             string children = "";
             // need to account for cases where leaves are missing
-            for (TreeNode &t : Children) {
-                string current_string = t.stringify();
+            for (TreeNode* t : Children) {
+                string current_string = t->stringify();
                 children += current_string;
                 children += ",";
             }
@@ -110,11 +127,6 @@ class TreeNode {
 
             return output;
         }
-};
-
-class Leaf : public TreeNode {
-    public:
-        string Label;
 };
 
 void reorder_strings(vector<string> &label_names, int* indices, int n) 
@@ -239,12 +251,22 @@ void cluster_axis(int num_data_rows, int num_data_cols, char distance_func, char
 
         // Add leaves
         for(int i = 0; i < num_data_leaves; ++i) {
-            Leaf  new_leaf;
+            TreeNode new_leaf;
             new_leaf.NodeId = i;
             new_leaf.Height = 0;
             new_leaf.Indices = {(int)i};
             new_leaf.Children = {};
             new_leaf.Label = label_names[i];
+            if (axis == 0) {
+                for (int j=0; j < num_data_cols; j++) {
+                    new_leaf.Values.push_back(heatmap_data[i][j]);
+                }
+            }
+            else {
+                for (int j=0; j < num_data_rows; j++) {
+                    new_leaf.Values.push_back(heatmap_data[j][i]);
+                }
+            }
             node_dict[i] = new_leaf;
         }
 
@@ -253,12 +275,12 @@ void cluster_axis(int num_data_rows, int num_data_cols, char distance_func, char
         
         for(int i=0; i<nnodes; i++){
             TreeNode new_tree_node;
+            new_tree_node.Label = "Node " + to_string(abs(cur_node_id));
             new_tree_node.NodeId = cur_node_id;
             new_tree_node.Height = cur_height;
             
             int left_child_id = clust_tree[i].left;
             int right_child_id = clust_tree[i].right;
-
             if (left_child_id >= 0) {
                 left_child_id = new_leaf_id[left_child_id];
             }
@@ -266,16 +288,11 @@ void cluster_axis(int num_data_rows, int num_data_cols, char distance_func, char
                 right_child_id = new_leaf_id[right_child_id];
             }
 
-            // Add all descendents to Children
-            new_tree_node.Children.push_back(node_dict[left_child_id]);
-            new_tree_node.Children.push_back(node_dict[right_child_id]);
-            vector<TreeNode> left_child_children = node_dict[left_child_id].Children;
-            vector<TreeNode> right_child_children = node_dict[right_child_id].Children;
-            copy (left_child_children.begin(), left_child_children.end(), back_inserter(new_tree_node.Children));
-            copy (right_child_children.begin(), right_child_children.end(), back_inserter(new_tree_node.Children));
+            // Add 2 Children
+            new_tree_node.Children.push_back(&(node_dict[left_child_id]));
+            new_tree_node.Children.push_back(&(node_dict[right_child_id]));
 
-            // Add itself and all descendents to Indices
-            new_tree_node.Indices.push_back(cur_node_id);
+            // Add all leaves to Indices
             vector<int> left_child_indices = node_dict[left_child_id].Indices;
             vector<int> right_child_indices = node_dict[right_child_id].Indices;
             copy (left_child_indices.begin(), left_child_indices.end(), back_inserter(new_tree_node.Indices));
